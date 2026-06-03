@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>똑똑 교무실용 - 교무실 호출</title>
-  <link rel="stylesheet" href="style.css?v=1.3" />
+  <link rel="stylesheet" href="style.css?v=1.4" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">교무실용 v1.3</span></h1>
+  <h1>똑똑 <span class="version">교무실용 v1.4</span></h1>
   <p>교무실 문 앞의 작은 노크를 실시간으로 확인합니다.</p>
 </header>
 
@@ -24,12 +24,22 @@
 
   <section class="card hero-card">
     <h2>교무실 화면 설정</h2>
+    <p class="notice">
+      이 화면을 보고 있는 교무실과 선생님을 저장합니다.
+      선택한 선생님에게 온 호출만 표시되고, 그 호출에만 음성 알림이 울립니다.
+    </p>
 
     <label>현재 확인할 교무실</label>
     <select id="officeFilter"></select>
 
+    <label>현재 확인할 선생님</label>
+    <select id="teacherFilter"></select>
+
+    <button class="btn light" style="margin-top:12px;" id="saveOfficeProfileBtn">교무실 화면 설정 저장</button>
+    <p id="officeProfileMessage" class="notice"></p>
+
     <div class="row" style="margin-top:12px;">
-      <button class="btn light" id="voiceTestBtn">알림 테스트</button>
+      <button class="btn light" id="voiceTestBtn">따뜻한 알림 테스트</button>
       <button class="btn secondary" id="soundToggle">음성 알림 ON</button>
     </div>
 
@@ -46,20 +56,8 @@
   <section class="card">
     <h2>선생님 → 학생 호출</h2>
 
-    <label>교무실 선택</label>
-    <select id="classCallOffice"></select>
-
-    <div class="row">
-      <div>
-        <label>선생님</label>
-        <select id="officeTeacherSelect"></select>
-      </div>
-
-      <div>
-        <label>호출할 학년</label>
-        <select id="classCallGrade"></select>
-      </div>
-    </div>
+    <label>호출할 학년</label>
+    <select id="classCallGrade"></select>
 
     <label>호출할 반</label>
     <select id="classCallClass"></select>
@@ -80,7 +78,7 @@
   </section>
 
   <section class="card">
-    <h2>선택한 교무실 통계</h2>
+    <h2>선택한 선생님 통계</h2>
 
     <div class="stats">
       <div class="stat">
@@ -117,8 +115,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="firebase-config.js?v=1.3"></script>
-<script src="common.js?v=1.3"></script>
+<script src="firebase-config.js?v=1.4"></script>
+<script src="common.js?v=1.4"></script>
 
 <script>
 let allCalls = [];
@@ -127,33 +125,37 @@ let lastSpokenIds = new Set();
 let newCallIds = new Set();
 let preferredVoice = null;
 
-/* 브라우저에서 가능한 범위 안에서
-   밝고 따뜻한 일본 여성 음성을 우선 선택 */
+function getOfficeSettings() {
+  const officeId = document.getElementById("officeFilter").value;
+  const teacherName = document.getElementById("teacherFilter").value;
+  return { officeId, teacherName };
+}
+
+function callMatchesThisScreen(call) {
+  const settings = getOfficeSettings();
+  return call.officeId === settings.officeId && call.teacherName === settings.teacherName;
+}
+
 function choosePreferredVoice() {
   if (!("speechSynthesis" in window)) return null;
 
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) return null;
 
-  const priorityNames = [
-    "Kyoko", "Haruka", "Sayaka", "O-ren", "O-Ren", "Ichiro"
+  const warmKeywords = [
+    "Yuna", "Yuna Compact", "Sora", "Narae", "Seoyeon",
+    "Kyoko", "Haruka", "Sayaka",
+    "Google 한국", "Google Korean",
+    "Microsoft SunHi", "Microsoft Heami"
   ];
 
-  // 1순위: 일본어 음성 중 이름이 잘 알려진 기본 음성
   let voice =
-    voices.find(v => priorityNames.some(n => v.name.includes(n))) ||
-    voices.find(v => v.lang === "ja-JP" && /female|kyoko|haruka|sayaka/i.test(v.name)) ||
-    voices.find(v => v.lang === "ja-JP");
-
-  // 2순위: 한국어 음성 중 비교적 부드러운 음성
-  if (!voice) {
-    voice =
-      voices.find(v => v.lang.startsWith("ko") && /female|yuna|narae/i.test(v.name)) ||
-      voices.find(v => v.lang.startsWith("ko"));
-  }
-
-  // 3순위: 아무거나
-  if (!voice) voice = voices[0];
+    voices.find(v => warmKeywords.some(k => v.name.toLowerCase().includes(k.toLowerCase()))) ||
+    voices.find(v => v.lang && v.lang.toLowerCase().startsWith("ko") && /female|yuna|sora|narae|seoyeon|sunhi|heami/i.test(v.name)) ||
+    voices.find(v => v.lang && v.lang.toLowerCase().startsWith("ko")) ||
+    voices.find(v => v.lang === "ja-JP" && /kyoko|haruka|sayaka|female/i.test(v.name)) ||
+    voices.find(v => v.lang === "ja-JP") ||
+    voices[0];
 
   return voice;
 }
@@ -169,29 +171,39 @@ if ("speechSynthesis" in window) {
 
 function initOfficeUI() {
   fillOfficeSelect("officeFilter", "grade3");
-  fillOfficeSelect("classCallOffice", "grade3");
-  fillTeacherSelect("officeTeacherSelect", document.getElementById("classCallOffice").value);
+  fillTeacherSelect("teacherFilter", document.getElementById("officeFilter").value);
   fillGradeSelect("classCallGrade", "3");
   fillClassSelect("classCallClass");
 
-  const savedOffice = localStorage.getItem("ddokddok_office_filter");
-  if (savedOffice) {
-    document.getElementById("officeFilter").value = savedOffice;
+  const saved = JSON.parse(localStorage.getItem("ddokddok_office_profile") || "{}");
+
+  if (saved.officeId) {
+    document.getElementById("officeFilter").value = saved.officeId;
+    fillTeacherSelect("teacherFilter", saved.officeId);
+  }
+
+  if (saved.teacherName) {
+    document.getElementById("teacherFilter").value = saved.teacherName;
   }
 
   document.getElementById("officeFilter").addEventListener("change", () => {
-    localStorage.setItem("ddokddok_office_filter", document.getElementById("officeFilter").value);
+    const officeId = document.getElementById("officeFilter").value;
+    fillTeacherSelect("teacherFilter", officeId);
+    saveOfficeProfile(false);
     renderOfficeCalls();
     renderStatsAndHistory();
   });
 
-  document.getElementById("classCallOffice").addEventListener("change", () => {
-    const officeId = document.getElementById("classCallOffice").value;
-    fillTeacherSelect("officeTeacherSelect", officeId);
+  document.getElementById("teacherFilter").addEventListener("change", () => {
+    saveOfficeProfile(false);
+    renderOfficeCalls();
+    renderStatsAndHistory();
   });
 
+  document.getElementById("saveOfficeProfileBtn").addEventListener("click", () => saveOfficeProfile(true));
+
   document.getElementById("voiceTestBtn").addEventListener("click", () => {
-    speak("똑똑! 교무실 호출 알림 테스트입니다.");
+    speak("똑똑! 따뜻한 교무실 호출 알림 테스트입니다.");
   });
 
   document.getElementById("soundToggle").addEventListener("click", () => {
@@ -201,7 +213,24 @@ function initOfficeUI() {
 
   document.getElementById("sendClassBtn").addEventListener("click", sendClassMessage);
   document.getElementById("exportBtn").addEventListener("click", exportCallsCSV);
-  document.getElementById("resetCallsBtn").addEventListener("click", resetCallsForOffice);
+  document.getElementById("resetCallsBtn").addEventListener("click", resetCallsForTeacher);
+}
+
+function saveOfficeProfile(showMessage) {
+  const officeId = document.getElementById("officeFilter").value;
+  const teacherName = document.getElementById("teacherFilter").value;
+  const office = getOffice(officeId);
+  const teacher = getTeacherByName(teacherName, officeId);
+
+  localStorage.setItem("ddokddok_office_profile", JSON.stringify({
+    officeId,
+    teacherName
+  }));
+
+  if (showMessage) {
+    document.getElementById("officeProfileMessage").textContent =
+      `${office.name} / ${teacher ? teacher.title : teacherName} 화면으로 저장했습니다.`;
+  }
 }
 
 function speak(text) {
@@ -209,10 +238,9 @@ function speak(text) {
   if (!("speechSynthesis" in window)) return;
 
   window.speechSynthesis.cancel();
+  refreshVoice();
 
   const utter = new SpeechSynthesisUtterance(text);
-
-  refreshVoice();
 
   if (preferredVoice) {
     utter.voice = preferredVoice;
@@ -221,9 +249,8 @@ function speak(text) {
     utter.lang = "ko-KR";
   }
 
-  /* 밝고 따뜻한 느낌 */
-  utter.rate = 1.03;
-  utter.pitch = 1.22;
+  utter.rate = 0.98;
+  utter.pitch = 1.32;
   utter.volume = 1;
 
   window.speechSynthesis.speak(utter);
@@ -232,7 +259,6 @@ function speak(text) {
 async function updateCall(callId, status, response) {
   if (!db) return;
 
-  /* 확인 버튼 누르면 깜빡임 즉시 해제 */
   newCallIds.delete(callId);
   renderOfficeCalls();
 
@@ -249,10 +275,10 @@ async function sendClassMessage() {
     return;
   }
 
-  const officeId = document.getElementById("classCallOffice").value;
-  const office = getOffice(officeId);
-  const teacherName = document.getElementById("officeTeacherSelect").value;
-  const teacher = getTeacherByName(teacherName, officeId);
+  const settings = getOfficeSettings();
+  const office = getOffice(settings.officeId);
+  const teacher = getTeacherByName(settings.teacherName, settings.officeId);
+
   const grade = document.getElementById("classCallGrade").value;
   const classNo = document.getElementById("classCallClass").value;
   const studentName = document.getElementById("classCallStudent").value.trim();
@@ -264,25 +290,25 @@ async function sendClassMessage() {
   }
 
   if (!teacher) {
-    alert("선생님을 선택해 주세요.");
+    alert("교무실 화면 설정에서 선생님을 선택해 주세요.");
     return;
   }
 
   const finalMessage = message.replaceAll("교무실", office.name);
 
   await db.ref("classMessages").push({
-    officeId,
+    officeId: settings.officeId,
     officeName: office.name,
     officeLocation: office.location,
     grade,
     classNo,
     studentName,
-    teacherName,
+    teacherName: teacher.name,
     teacherTitle: teacher.title,
     message: finalMessage,
     status: "active",
     createdAt: firebase.database.ServerValue.TIMESTAMP,
-    version: APP_VERSION
+    version: "v1.4"
   });
 
   document.getElementById("classCallResult").textContent =
@@ -305,11 +331,16 @@ function startListeners() {
     renderStatsAndHistory();
   });
 
-  db.ref("calls").orderByChild("createdAt").limitToLast(60).on("child_added", snap => {
+  db.ref("calls").orderByChild("createdAt").limitToLast(80).on("child_added", snap => {
     const call = { id: snap.key, ...snap.val() };
     const isNew = Date.now() - (call.createdAt || 0) < 15000;
 
-    if (isNew && call.status === "pending" && !lastSpokenIds.has(call.id)) {
+    if (
+      isNew &&
+      call.status === "pending" &&
+      callMatchesThisScreen(call) &&
+      !lastSpokenIds.has(call.id)
+    ) {
       lastSpokenIds.add(call.id);
       newCallIds.add(call.id);
 
@@ -327,16 +358,24 @@ function startListeners() {
   });
 }
 
+function getFilteredCalls() {
+  return allCalls.filter(c => callMatchesThisScreen(c));
+}
+
 function renderOfficeCalls() {
   const box = document.getElementById("officeCalls");
-  const officeId = document.getElementById("officeFilter").value;
-
-  const activeCalls = allCalls.filter(c => {
-    return c.officeId === officeId && c.status !== "completed";
-  });
+  const activeCalls = getFilteredCalls().filter(c => c.status !== "completed");
 
   if (!activeCalls.length) {
-    box.textContent = "현재 대기 중인 호출이 없습니다.";
+    const settings = getOfficeSettings();
+    const office = getOffice(settings.officeId);
+    const teacher = getTeacherByName(settings.teacherName, settings.officeId);
+
+    box.innerHTML = `
+      <p class="notice">
+        현재 ${safe(office.name)} / ${safe(teacher ? teacher.title : "선택한 선생님")}에게 온 대기 호출이 없습니다.
+      </p>
+    `;
     return;
   }
 
@@ -377,10 +416,9 @@ function renderOfficeCalls() {
 
 function renderStatsAndHistory() {
   const today = todayStartMs();
-  const officeId = document.getElementById("officeFilter").value;
 
-  const todayCalls = allCalls.filter(c => {
-    return c.officeId === officeId && (c.createdAt || 0) >= today;
+  const todayCalls = getFilteredCalls().filter(c => {
+    return (c.createdAt || 0) >= today;
   });
 
   const pending = todayCalls.filter(c => c.status !== "completed").length;
@@ -417,25 +455,24 @@ function renderStatsAndHistory() {
   }).join("");
 }
 
-async function resetCallsForOffice() {
+async function resetCallsForTeacher() {
   if (!db) {
     alert("Firebase 설정이 필요합니다.");
     return;
   }
 
-  const officeId = document.getElementById("officeFilter").value;
-  const office = getOffice(officeId);
+  const settings = getOfficeSettings();
+  const office = getOffice(settings.officeId);
+  const teacher = getTeacherByName(settings.teacherName, settings.officeId);
 
-  const ok = confirm(`${office.name}의 호출 기록을 리셋할까요?\n이 작업은 되돌릴 수 없습니다.`);
+  const ok = confirm(`${office.name} / ${teacher ? teacher.title : settings.teacherName} 호출 기록을 리셋할까요?\n이 작업은 되돌릴 수 없습니다.`);
   if (!ok) return;
 
   const updates = {};
 
-  allCalls
-    .filter(c => c.officeId === officeId)
-    .forEach(c => {
-      updates[`calls/${c.id}`] = null;
-    });
+  getFilteredCalls().forEach(c => {
+    updates[`calls/${c.id}`] = null;
+  });
 
   if (!Object.keys(updates).length) {
     alert("리셋할 호출 기록이 없습니다.");
@@ -447,9 +484,10 @@ async function resetCallsForOffice() {
 }
 
 function exportCallsCSV() {
-  const officeId = document.getElementById("officeFilter").value;
-  const office = getOffice(officeId);
-  const filtered = allCalls.filter(c => c.officeId === officeId);
+  const settings = getOfficeSettings();
+  const office = getOffice(settings.officeId);
+  const teacher = getTeacherByName(settings.teacherName, settings.officeId);
+  const filtered = getFilteredCalls();
 
   const header = [
     "시간",
@@ -490,7 +528,7 @@ function exportCallsCSV() {
   const a = document.createElement("a");
 
   a.href = url;
-  a.download = `ddokddok_${office.name}_calls_${Date.now()}.csv`;
+  a.download = `ddokddok_${office.name}_${teacher ? teacher.name : "teacher"}_calls_${Date.now()}.csv`;
   a.click();
 
   URL.revokeObjectURL(url);
