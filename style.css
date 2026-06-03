@@ -1,25 +1,30 @@
-/* 똑똑 v1.3 공통 디자인 */
+/* 똑똑 v1.4 공통 디자인 */
+
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap');
 
 :root {
-  --bg-top: #f8f5ee;
-  --bg-mid: #f4ebdc;
-  --bg-bottom: #eedfc9;
+  --sky: #dff3ff;
+  --sun: #fff0bd;
+  --sun-soft: rgba(255, 239, 188, 0.58);
+  --wall: #fff8ef;
+  --floor: #efd8ba;
 
-  --card: rgba(255, 252, 246, 0.95);
-  --ink: #2f281f;
-  --muted: #7d7266;
-  --line: #e8d8c0;
+  --card: rgba(255, 253, 247, 0.88);
+  --card-strong: rgba(255, 251, 243, 0.96);
 
-  --wood: #a06a3b;
-  --wood-dark: #6a4120;
-  --wood-light: #d0a26d;
+  --ink: #3a2f25;
+  --muted: #82766a;
+  --line: #ead9bf;
 
-  --chalk: #4a6651;
-  --chalk-deep: #33473a;
-  --sun: #fff3c9;
+  --wood: #b9854f;
+  --wood-deep: #73451f;
+  --wood-soft: #e4bd8c;
 
-  --main: #8c6442;
-  --accent: #7eb3c1;
+  --chalk: #4f725a;
+  --chalk-deep: #3b5644;
+
+  --blue: #8fc5d6;
+  --purple: #b9a7e8;
 
   --good: #15803d;
   --warn: #ea580c;
@@ -37,50 +42,76 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
 
 body {
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: "Gowun Dodum", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0) 20%),
-    radial-gradient(circle at 10% 10%, rgba(255,255,255,0.95), transparent 20%),
-    radial-gradient(circle at 85% 14%, rgba(255,244,199,0.9), transparent 26%),
-    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 46%, var(--bg-bottom) 100%);
-  position: relative;
+    radial-gradient(circle at 16% 12%, rgba(255,255,255,0.95), transparent 17%),
+    radial-gradient(circle at 82% 9%, rgba(255,238,179,0.85), transparent 20%),
+    linear-gradient(180deg, #eaf7ff 0%, #fff8ef 34%, #f5e7d4 70%, #ecd4b5 100%);
   overflow-x: hidden;
 }
 
-/* 창살 같은 햇살 느낌 */
+/* 따뜻한 창가 햇살 */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: -2;
   background:
-    linear-gradient(120deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0) 18%,
-      rgba(255,250,228,0.55) 22%,
-      rgba(255,250,228,0.12) 35%,
-      rgba(255,255,255,0) 48%
+    linear-gradient(115deg,
+      transparent 0%,
+      transparent 13%,
+      rgba(255, 245, 205, 0.68) 16%,
+      rgba(255, 245, 205, 0.28) 29%,
+      transparent 43%
+    ),
+    linear-gradient(115deg,
+      transparent 28%,
+      rgba(255, 255, 255, 0.38) 32%,
+      rgba(255, 255, 255, 0.08) 45%,
+      transparent 57%
     );
-  opacity: 0.8;
+  opacity: 0.95;
+}
+
+/* 교실 바닥/벽 패턴 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 42vh;
+  pointer-events: none;
+  z-index: -3;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(151, 93, 43, 0.10) 0,
+      rgba(151, 93, 43, 0.10) 2px,
+      transparent 2px,
+      transparent 78px
+    ),
+    linear-gradient(180deg, rgba(255,255,255,0), rgba(188,128,70,0.17));
 }
 
 header {
   position: relative;
-  padding: 20px 18px 18px;
-  color: #fffef9;
+  padding: 22px 18px 18px;
+  color: #fffef8;
   background:
-    linear-gradient(180deg, var(--chalk) 0%, var(--chalk-deep) 100%);
-  border-top: 12px solid var(--wood);
-  border-bottom: 10px solid var(--wood);
-  box-shadow: 0 8px 24px rgba(60, 39, 18, 0.18);
+    linear-gradient(180deg, rgba(79,114,90,0.96), rgba(55,82,65,0.96));
+  border-top: 10px solid var(--wood);
+  border-bottom: 9px solid var(--wood);
+  box-shadow: 0 8px 24px rgba(80, 50, 25, 0.18);
+  overflow: hidden;
 }
 
 header::before {
@@ -90,20 +121,35 @@ header::before {
   background:
     repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.018) 0px,
-      rgba(255,255,255,0.018) 2px,
-      rgba(0,0,0,0.01) 2px,
-      rgba(0,0,0,0.01) 4px
+      rgba(255,255,255,0.025) 0px,
+      rgba(255,255,255,0.025) 3px,
+      rgba(0,0,0,0.01) 3px,
+      rgba(0,0,0,0.01) 6px
     );
   pointer-events: none;
 }
 
+header::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  width: 72px;
+  height: 42px;
+  border-radius: 8px;
+  border: 3px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  transform: rotate(-2deg);
+}
+
 header h1 {
   margin: 0;
-  font-size: 27px;
-  letter-spacing: -0.7px;
+  font-family: "Jua", "Gowun Dodum", sans-serif;
+  font-size: 30px;
+  letter-spacing: -0.6px;
   position: relative;
   z-index: 1;
+  font-weight: 400;
 }
 
 header p {
@@ -118,68 +164,61 @@ header p {
 main {
   max-width: 980px;
   margin: 0 auto;
-  padding: 18px 14px 30px;
+  padding: 18px 14px 32px;
 }
 
 .version {
   display: inline-block;
   margin-left: 7px;
-  padding: 2px 9px;
+  padding: 3px 10px;
+  font-family: "Gowun Dodum", sans-serif;
   font-size: 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.28);
 }
 
 .card {
   position: relative;
-  background:
-    linear-gradient(180deg, rgba(255,253,249,0.97), rgba(255,248,239,0.95));
-  border: 1px solid var(--line);
-  border-radius: 24px;
+  background: var(--card);
+  border: 1px solid rgba(232, 216, 192, 0.9);
+  border-radius: 26px;
   padding: 16px;
   margin-bottom: 14px;
   box-shadow:
-    0 14px 30px rgba(91,53,27,0.09),
-    inset 0 1px 0 rgba(255,255,255,0.75);
+    0 16px 32px rgba(96, 60, 30, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.72);
+  backdrop-filter: blur(14px);
   overflow: hidden;
 }
 
 .card::before {
   content: "";
   position: absolute;
-  left: 16px;
+  left: 20px;
   top: 0;
-  width: 56px;
+  width: 58px;
   height: 5px;
-  background: rgba(160, 106, 59, 0.25);
-  border-radius: 0 0 10px 10px;
+  background: rgba(185, 133, 79, 0.28);
+  border-radius: 0 0 12px 12px;
 }
 
 .hero-card {
   background:
-    linear-gradient(135deg, rgba(255,252,246,0.97), rgba(255,244,224,0.96));
+    linear-gradient(135deg, rgba(255,253,247,0.94), rgba(255,245,226,0.86));
 }
 
 .hero-card::after {
-  /* 예전 반투명 "똑똑" 제거 */
   content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(125deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,248,216,0.44) 18%,
-      rgba(255,255,255,0.06) 34%,
-      rgba(255,255,255,0) 50%);
 }
 
 .card h2 {
   margin: 0 0 10px;
-  font-size: 18px;
+  font-family: "Jua", "Gowun Dodum", sans-serif;
+  font-size: 20px;
   letter-spacing: -0.3px;
-  color: #4e3a28;
+  color: #4b3827;
+  font-weight: 400;
 }
 
 label {
@@ -187,7 +226,7 @@ label {
   font-size: 13px;
   color: var(--muted);
   margin: 10px 0 5px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 input,
@@ -195,20 +234,20 @@ select,
 textarea {
   width: 100%;
   border: 1px solid #e4cfb0;
-  border-radius: 16px;
-  padding: 11px 12px;
+  border-radius: 18px;
+  padding: 12px 13px;
   font: inherit;
-  background: #fffdf9;
+  background: rgba(255, 254, 251, 0.94);
   color: var(--ink);
   outline: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #bf8a56;
-  box-shadow: 0 0 0 4px rgba(191,138,86,0.15);
+  border-color: #c7955d;
+  box-shadow: 0 0 0 4px rgba(199,149,93,0.15);
 }
 
 textarea {
@@ -230,25 +269,25 @@ textarea {
 
 .btn {
   border: none;
-  border-radius: 17px;
+  border-radius: 18px;
   padding: 11px 14px;
   font: inherit;
-  font-weight: 900;
+  font-weight: 800;
   color: white;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   text-align: center;
-  background: linear-gradient(135deg, var(--wood), var(--accent));
-  box-shadow: 0 8px 18px rgba(91,53,27,0.16);
+  background: linear-gradient(135deg, #bd8751, #86bfcc);
+  box-shadow: 0 8px 18px rgba(91,53,27,0.15);
 }
 
 .btn.secondary {
-  background: linear-gradient(135deg, var(--wood-dark), var(--wood));
+  background: linear-gradient(135deg, #7b4a24, #c28b55);
 }
 
 .btn.light {
-  background: #fff8ef;
+  background: rgba(255, 249, 239, 0.95);
   color: #7c4a20;
   border: 1px solid #e7cfae;
   box-shadow: none;
@@ -265,17 +304,19 @@ textarea {
 
 .big-knock {
   width: 100%;
-  font-size: 23px;
-  padding: 17px;
+  font-family: "Jua", "Gowun Dodum", sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+  padding: 18px;
   margin-top: 13px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, var(--wood), #7aa9b5);
+  border-radius: 24px;
+  background: linear-gradient(135deg, #b77b44, #7fb8c4);
 }
 
 .notice {
   font-size: 13px;
   color: var(--muted);
-  line-height: 1.58;
+  line-height: 1.62;
 }
 
 .hidden {
@@ -284,9 +325,9 @@ textarea {
 
 .switch-box {
   border: 1px dashed #e3c9a4;
-  background: #fff8ef;
-  border-radius: 16px;
-  padding: 11px 12px;
+  background: rgba(255, 248, 239, 0.84);
+  border-radius: 18px;
+  padding: 12px;
   margin-top: 10px;
   font-size: 13px;
   color: #6b4f35;
@@ -314,7 +355,7 @@ textarea {
   border: 1px solid var(--line);
   background: white;
   color: var(--muted);
-  font-weight: 850;
+  font-weight: 800;
 }
 
 .pill.pending {
@@ -355,11 +396,11 @@ textarea {
 
 .call-card {
   border: 1px solid #eadcc8;
-  border-radius: 20px;
-  padding: 13px;
+  border-radius: 22px;
+  padding: 14px;
   margin: 10px 0;
-  background: rgba(255,253,249,0.98);
-  box-shadow: 0 7px 18px rgba(91,53,27,0.07);
+  background: rgba(255,253,249,0.96);
+  box-shadow: 0 8px 18px rgba(91,53,27,0.07);
 }
 
 .call-card.fast {
@@ -377,7 +418,7 @@ textarea {
 }
 
 .call-title {
-  font-weight: 950;
+  font-weight: 900;
   margin-bottom: 6px;
   line-height: 1.35;
 }
@@ -385,7 +426,7 @@ textarea {
 .call-meta {
   font-size: 12px;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.6;
 }
 
 .call-actions {
@@ -401,15 +442,15 @@ textarea {
   border-radius: 999px;
   padding: 7px 11px;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   cursor: pointer;
   color: #6b4f35;
 }
 
 .call-actions button.primary {
-  background: var(--wood);
+  background: #b9854f;
   color: white;
-  border-color: var(--wood);
+  border-color: #b9854f;
 }
 
 .call-actions button.done {
@@ -426,9 +467,9 @@ textarea {
 
 .stat {
   padding: 13px;
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid #eadcc8;
-  background: #fff8ef;
+  background: rgba(255,248,239,0.9);
 }
 
 .stat b {
@@ -451,7 +492,7 @@ textarea {
 
 .teacher-alert {
   border: 2px solid #f59e0b;
-  background: linear-gradient(135deg, #fff7ed, #fff6ef);
+  background: linear-gradient(135deg, #fff7ed, #fffaf2);
   box-shadow: 0 0 0 4px rgba(245,158,11,0.10), 0 10px 24px rgba(245,158,11,0.10);
 }
 
@@ -461,11 +502,11 @@ textarea {
 
 @keyframes warmPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255,193,79,0.45), 0 8px 18px rgba(91,53,27,0.08);
+    box-shadow: 0 0 0 0 rgba(255,193,79,0.46), 0 8px 18px rgba(91,53,27,0.08);
     transform: translateY(0);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(255,193,79,0.12), 0 12px 24px rgba(91,53,27,0.14);
+    box-shadow: 0 0 0 9px rgba(255,193,79,0.12), 0 12px 24px rgba(91,53,27,0.14);
     transform: translateY(-1px);
   }
   100% {
@@ -483,7 +524,7 @@ textarea {
 
 .footer-note a {
   color: #7c4a20;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 @media (max-width: 720px) {
@@ -494,6 +535,6 @@ textarea {
   }
 
   header h1 {
-    font-size: 22px;
+    font-size: 25px;
   }
 }
