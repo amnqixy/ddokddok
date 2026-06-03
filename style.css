@@ -1,31 +1,30 @@
-/* 똑똑 v1.4 공통 디자인 */
+/* 똑똑 v1.5 공통 디자인 */
 
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Jua&display=swap');
 
 :root {
-  --sky: #dff3ff;
-  --sun: #fff0bd;
-  --sun-soft: rgba(255, 239, 188, 0.58);
-  --wall: #fff8ef;
-  --floor: #efd8ba;
+  --sky: #eef9ff;
+  --light-cream: #fffaf1;
+  --cream: #fff5e9;
+  --warm-floor: #ecd7bb;
+  --warm-floor-deep: #dfc39e;
 
-  --card: rgba(255, 253, 247, 0.88);
-  --card-strong: rgba(255, 251, 243, 0.96);
+  --card: rgba(255, 252, 246, 0.88);
+  --card-strong: rgba(255, 251, 245, 0.95);
 
   --ink: #3a2f25;
-  --muted: #82766a;
-  --line: #ead9bf;
+  --muted: #817466;
+  --line: #ead8bd;
 
   --wood: #b9854f;
-  --wood-deep: #73451f;
-  --wood-soft: #e4bd8c;
+  --wood-deep: #72441f;
+  --wood-soft: #d9af7b;
 
-  --chalk: #4f725a;
-  --chalk-deep: #3b5644;
+  --chalkboard: #5d7b68;
+  --chalkboard-deep: #445b4b;
+  --chalk: rgba(255,255,255,0.9);
 
-  --blue: #8fc5d6;
-  --purple: #b9a7e8;
-
+  --blue: #90c7d5;
   --good: #15803d;
   --warn: #ea580c;
   --bad: #dc2626;
@@ -52,14 +51,14 @@ body {
   min-height: 100vh;
   font-family: "Gowun Dodum", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 16% 12%, rgba(255,255,255,0.95), transparent 17%),
-    radial-gradient(circle at 82% 9%, rgba(255,238,179,0.85), transparent 20%),
-    linear-gradient(180deg, #eaf7ff 0%, #fff8ef 34%, #f5e7d4 70%, #ecd4b5 100%);
   overflow-x: hidden;
+  background:
+    radial-gradient(circle at 8% 10%, rgba(255,255,255,0.96), transparent 18%),
+    radial-gradient(circle at 16% 22%, rgba(255,250,227,0.88), transparent 16%),
+    linear-gradient(180deg, #f4fbff 0%, #fffaf1 34%, #f6ead9 72%, #ecd6b8 100%);
 }
 
-/* 따뜻한 창가 햇살 */
+/* 왼쪽에서 오른쪽으로 비스듬히 들어오는 햇살 */
 body::before {
   content: "";
   position: fixed;
@@ -67,98 +66,174 @@ body::before {
   pointer-events: none;
   z-index: -2;
   background:
-    linear-gradient(115deg,
-      transparent 0%,
-      transparent 13%,
-      rgba(255, 245, 205, 0.68) 16%,
-      rgba(255, 245, 205, 0.28) 29%,
-      transparent 43%
+    linear-gradient(135deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 10%,
+      rgba(255,247,210,0.72) 17%,
+      rgba(255,247,210,0.30) 27%,
+      rgba(255,255,255,0) 38%
     ),
-    linear-gradient(115deg,
-      transparent 28%,
-      rgba(255, 255, 255, 0.38) 32%,
-      rgba(255, 255, 255, 0.08) 45%,
-      transparent 57%
+    linear-gradient(135deg,
+      rgba(255,255,255,0) 9%,
+      rgba(255,255,255,0.34) 16%,
+      rgba(255,255,255,0.08) 28%,
+      rgba(255,255,255,0) 40%
+    ),
+    linear-gradient(135deg,
+      rgba(255,255,255,0) 24%,
+      rgba(255,247,210,0.26) 31%,
+      rgba(255,255,255,0) 42%
     );
   opacity: 0.95;
 }
 
-/* 교실 바닥/벽 패턴 */
+/* 교실 바닥 느낌 */
 body::after {
   content: "";
   position: fixed;
-  inset: auto 0 0 0;
-  height: 42vh;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 36vh;
   pointer-events: none;
   z-index: -3;
   background:
     repeating-linear-gradient(
       90deg,
-      rgba(151, 93, 43, 0.10) 0,
-      rgba(151, 93, 43, 0.10) 2px,
+      rgba(160, 104, 51, 0.09) 0,
+      rgba(160, 104, 51, 0.09) 2px,
       transparent 2px,
-      transparent 78px
+      transparent 84px
     ),
-    linear-gradient(180deg, rgba(255,255,255,0), rgba(188,128,70,0.17));
+    linear-gradient(180deg, rgba(255,255,255,0), rgba(188,128,70,0.18));
 }
 
 header {
   position: relative;
-  padding: 22px 18px 18px;
+  padding: 20px 18px 22px;
   color: #fffef8;
-  background:
-    linear-gradient(180deg, rgba(79,114,90,0.96), rgba(55,82,65,0.96));
-  border-top: 10px solid var(--wood);
-  border-bottom: 9px solid var(--wood);
-  box-shadow: 0 8px 24px rgba(80, 50, 25, 0.18);
   overflow: hidden;
+  background:
+    /* chalk tray / 하단 받침대 */
+    linear-gradient(180deg, transparent calc(100% - 18px), rgba(112,72,36,0.95) calc(100% - 18px), rgba(179,126,72,0.98) 100%),
+    /* 지우개 */
+    linear-gradient(180deg, transparent 0, transparent calc(100% - 30px), transparent calc(100% - 30px)),
+    /* chalkboard */
+    linear-gradient(180deg, var(--chalkboard) 0%, var(--chalkboard-deep) 100%);
+  border-top: 10px solid var(--wood);
+  border-bottom: 10px solid var(--wood);
+  box-shadow: 0 8px 24px rgba(80, 50, 25, 0.18);
 }
 
+/* 칠판 질감 + 분필/지우개 장식 */
 header::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
+    /* chalk dust */
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.08) 0 2px, transparent 3px),
+    radial-gradient(circle at 42% 17%, rgba(255,255,255,0.06) 0 2px, transparent 3px),
+    radial-gradient(circle at 75% 26%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
     repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.025) 0px,
-      rgba(255,255,255,0.025) 3px,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 3px,
       rgba(0,0,0,0.01) 3px,
       rgba(0,0,0,0.01) 6px
-    );
+    ),
+    /* 지우개 */
+    linear-gradient(0deg, transparent calc(100% - 34px), #d2b38e calc(100% - 34px), #c89d69 calc(100% - 20px), transparent calc(100% - 20px)),
+    linear-gradient(0deg, transparent calc(100% - 33px), #7e5832 calc(100% - 33px), #7e5832 calc(100% - 31px), transparent calc(100% - 31px)),
+    /* 분필 1 */
+    linear-gradient(135deg, transparent calc(100% - 35px), #ffffff calc(100% - 35px), #f4f4f4 calc(100% - 31px), transparent calc(100% - 31px)),
+    /* 분필 2 */
+    linear-gradient(135deg, transparent calc(100% - 35px), #ffe8ef calc(100% - 35px), #ffd7e2 calc(100% - 31px), transparent calc(100% - 31px));
+  background-size:
+    auto,
+    auto,
+    auto,
+    auto,
+    120px 100%,
+    120px 100%,
+    100px 100%,
+    140px 100%;
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    calc(100% - 64px) 0,
+    calc(100% - 64px) 0,
+    calc(100% - 120px) 0,
+    calc(100% - 20px) 0;
+  background-repeat: no-repeat;
   pointer-events: none;
 }
 
+/* 오른쪽 위 안내 종이 */
 header::after {
-  content: "";
+  content: "안내\A 조용한 호출도\A 사용할 수 있어요";
+  white-space: pre-line;
   position: absolute;
-  right: 20px;
-  bottom: 12px;
-  width: 72px;
-  height: 42px;
-  border-radius: 8px;
-  border: 3px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.05);
-  transform: rotate(-2deg);
+  right: 18px;
+  top: 14px;
+  width: 108px;
+  padding: 10px 10px 12px;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255,253,240,0.98), rgba(255,247,220,0.96));
+  color: #5f513d;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: rotate(4deg);
+  border: 1px solid rgba(198,170,122,0.55);
+  pointer-events: none;
 }
 
 header h1 {
   margin: 0;
-  font-family: "Jua", "Gowun Dodum", sans-serif;
-  font-size: 30px;
-  letter-spacing: -0.6px;
   position: relative;
   z-index: 1;
-  font-weight: 400;
+  font-family: "Gaegu", "Jua", sans-serif;
+  font-size: 50px;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.96);
+  text-shadow:
+    0 0 1px rgba(255,255,255,0.65),
+    1px 1px 0 rgba(255,255,255,0.14),
+    -1px 1px 0 rgba(255,255,255,0.10),
+    0 2px 6px rgba(0,0,0,0.10);
+}
+
+header h1::after {
+  content: "";
+  display: block;
+  width: 108px;
+  height: 5px;
+  margin-top: 6px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  opacity: 0.78;
+  transform: rotate(-2deg);
 }
 
 header p {
-  margin: 7px 0 0;
-  font-size: 13px;
-  line-height: 1.55;
-  opacity: 0.96;
+  margin: 8px 0 0;
   position: relative;
   z-index: 1;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.92);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.10);
+  max-width: 70%;
 }
 
 main {
@@ -169,12 +244,13 @@ main {
 
 .version {
   display: inline-block;
-  margin-left: 7px;
-  padding: 3px 10px;
+  margin-left: 8px;
+  padding: 4px 10px;
+  vertical-align: middle;
   font-family: "Gowun Dodum", sans-serif;
   font-size: 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.17);
   border: 1px solid rgba(255,255,255,0.28);
 }
 
@@ -187,7 +263,7 @@ main {
   margin-bottom: 14px;
   box-shadow:
     0 16px 32px rgba(96, 60, 30, 0.10),
-    inset 0 1px 0 rgba(255,255,255,0.72);
+    inset 0 1px 0 rgba(255,255,255,0.75);
   backdrop-filter: blur(14px);
   overflow: hidden;
 }
@@ -197,26 +273,22 @@ main {
   position: absolute;
   left: 20px;
   top: 0;
-  width: 58px;
+  width: 60px;
   height: 5px;
-  background: rgba(185, 133, 79, 0.28);
+  background: rgba(185, 133, 79, 0.26);
   border-radius: 0 0 12px 12px;
 }
 
 .hero-card {
   background:
-    linear-gradient(135deg, rgba(255,253,247,0.94), rgba(255,245,226,0.86));
-}
-
-.hero-card::after {
-  content: "";
+    linear-gradient(135deg, rgba(255,253,247,0.95), rgba(255,246,230,0.88));
 }
 
 .card h2 {
   margin: 0 0 10px;
   font-family: "Jua", "Gowun Dodum", sans-serif;
   font-size: 20px;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
   color: #4b3827;
   font-weight: 400;
 }
@@ -237,10 +309,10 @@ textarea {
   border-radius: 18px;
   padding: 12px 13px;
   font: inherit;
-  background: rgba(255, 254, 251, 0.94);
+  background: rgba(255, 254, 251, 0.95);
   color: var(--ink);
   outline: none;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
 }
 
 input:focus,
@@ -399,7 +471,7 @@ textarea {
   border-radius: 22px;
   padding: 14px;
   margin: 10px 0;
-  background: rgba(255,253,249,0.96);
+  background: rgba(255,253,249,0.97);
   box-shadow: 0 8px 18px rgba(91,53,27,0.07);
 }
 
@@ -534,7 +606,24 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  header {
+    padding-top: 18px;
+    padding-bottom: 20px;
+  }
+
   header h1 {
-    font-size: 25px;
+    font-size: 40px;
+  }
+
+  header p {
+    max-width: 78%;
+    font-size: 13px;
+  }
+
+  header::after {
+    width: 88px;
+    font-size: 10px;
+    right: 12px;
+    top: 12px;
   }
 }
