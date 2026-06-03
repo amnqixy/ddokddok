@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>똑똑 교무실용 - 교무실 호출</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=1.2" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">교무실용 v1.1</span></h1>
+  <h1>똑똑 <span class="version">교무실용 v1.2</span></h1>
   <p>교무실 문 앞의 작은 노크를 실시간으로 확인합니다.</p>
 </header>
 
@@ -56,10 +56,13 @@
       </div>
 
       <div>
-        <label>호출할 반</label>
-        <select id="classCallClass"></select>
+        <label>호출할 학년</label>
+        <select id="classCallGrade"></select>
       </div>
     </div>
+
+    <label>호출할 반</label>
+    <select id="classCallClass"></select>
 
     <label>학생 이름</label>
     <input id="classCallStudent" placeholder="학생 이름" />
@@ -114,8 +117,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="common.js"></script>
+<script src="firebase-config.js?v=1.2"></script>
+<script src="common.js?v=1.2"></script>
 
 <script>
 let allCalls = [];
@@ -126,8 +129,9 @@ let newCallIds = new Set();
 function initOfficeUI() {
   fillOfficeSelect("officeFilter", "grade3");
   fillOfficeSelect("classCallOffice", "grade3");
-  fillClassSelect("classCallClass");
   fillTeacherSelect("officeTeacherSelect", document.getElementById("classCallOffice").value);
+  fillGradeSelect("classCallGrade", "3");
+  fillClassSelect("classCallClass");
 
   const savedOffice = localStorage.getItem("ddokddok_office_filter");
   if (savedOffice) {
@@ -141,7 +145,8 @@ function initOfficeUI() {
   });
 
   document.getElementById("classCallOffice").addEventListener("change", () => {
-    fillTeacherSelect("officeTeacherSelect", document.getElementById("classCallOffice").value);
+    const officeId = document.getElementById("classCallOffice").value;
+    fillTeacherSelect("officeTeacherSelect", officeId);
   });
 
   document.getElementById("voiceTestBtn").addEventListener("click", () => {
@@ -192,6 +197,7 @@ async function sendClassMessage() {
   const office = getOffice(officeId);
   const teacherName = document.getElementById("officeTeacherSelect").value;
   const teacher = getTeacherByName(teacherName, officeId);
+  const grade = document.getElementById("classCallGrade").value;
   const classNo = document.getElementById("classCallClass").value;
   const studentName = document.getElementById("classCallStudent").value.trim();
   const message = document.getElementById("classCallMessage").value;
@@ -212,6 +218,7 @@ async function sendClassMessage() {
     officeId,
     officeName: office.name,
     officeLocation: office.location,
+    grade,
     classNo,
     studentName,
     teacherName,
@@ -223,7 +230,7 @@ async function sendClassMessage() {
   });
 
   document.getElementById("classCallResult").textContent =
-    `${classNo}반 ${studentName} 학생에게 호출 메시지를 보냈습니다.`;
+    `${grade}학년 ${classNo}반 ${studentName} 학생에게 호출 메시지를 보냈습니다.`;
 }
 
 function startListeners() {
@@ -267,7 +274,10 @@ function startListeners() {
 function renderOfficeCalls() {
   const box = document.getElementById("officeCalls");
   const officeId = document.getElementById("officeFilter").value;
-  const activeCalls = allCalls.filter(c => c.officeId === officeId && c.status !== "completed");
+
+  const activeCalls = allCalls.filter(c => {
+    return c.officeId === officeId && c.status !== "completed";
+  });
 
   if (!activeCalls.length) {
     box.textContent = "현재 대기 중인 호출이 없습니다.";
@@ -278,6 +288,8 @@ function renderOfficeCalls() {
     const uClass = urgencyClass(c.urgency);
     const quietClass = c.quiet ? "quiet" : "";
     const isNew = newCallIds.has(c.id);
+    const officeName = c.officeName || "교무실";
+    const grade = c.grade || "3";
 
     return `
       <div class="call-card ${uClass} ${quietClass} ${isNew ? "new-call" : ""}">
@@ -289,16 +301,16 @@ function renderOfficeCalls() {
         </div>
 
         <div class="call-meta">
-          ${safe(c.officeName || "-")} · 3학년 ${safe(c.classNo)}반 ${safe(c.studentName)} 학생<br>
+          ${safe(officeName)} · ${safe(grade)}학년 ${safe(c.classNo)}반 ${safe(c.studentName)} 학생<br>
           요청 내용: ${safe(c.reason)} · 시간: ${fullTimeText(c.createdAt)}<br>
           상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
           ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
         </div>
 
         <div class="call-actions">
-          <button class="primary" onclick="updateCall('${c.id}', 'confirmed', '지금 ${safe(c.officeName || "교무실")}로 와 주세요.')">지금 오세요</button>
-          <button onclick="updateCall('${c.id}', 'confirmed', '점심시간에 ${safe(c.officeName || "교무실")}로 와 주세요.')">점심시간에</button>
-          <button onclick="updateCall('${c.id}', 'confirmed', '수업 후에 ${safe(c.officeName || "교무실")}로 와 주세요.')">수업 후에</button>
+          <button class="primary" onclick="updateCall('${c.id}', 'confirmed', '지금 ${safe(officeName)}로 와 주세요.')">지금 오세요</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '점심시간에 ${safe(officeName)}로 와 주세요.')">점심시간에</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '수업 후에 ${safe(officeName)}로 와 주세요.')">수업 후에</button>
           <button onclick="updateCall('${c.id}', 'confirmed', '잠시 기다려 주세요.')">잠시 기다려요</button>
           <button class="done" onclick="updateCall('${c.id}', 'completed', '처리 완료')">처리 완료</button>
         </div>
@@ -331,6 +343,7 @@ function renderStatsAndHistory() {
 
   box.innerHTML = todayCalls.map(c => {
     const uClass = urgencyClass(c.urgency);
+    const grade = c.grade || "3";
 
     return `
       <div class="call-card ${uClass}">
@@ -338,7 +351,7 @@ function renderStatsAndHistory() {
           ${safe(c.teacherTitle || c.teacherName + " 선생님")} · ${safe(c.studentName)} 학생
         </div>
         <div class="call-meta">
-          3학년 ${safe(c.classNo)}반 · ${safe(c.reason)} 요청 · 긴급도: ${safe(c.urgency)}<br>
+          ${safe(grade)}학년 ${safe(c.classNo)}반 · ${safe(c.reason)} 요청 · 긴급도: ${safe(c.urgency)}<br>
           시간: ${fullTimeText(c.createdAt)} · 상태:
           <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
           ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
@@ -361,6 +374,7 @@ async function resetCallsForOffice() {
   if (!ok) return;
 
   const updates = {};
+
   allCalls
     .filter(c => c.officeId === officeId)
     .forEach(c => {
@@ -381,12 +395,25 @@ function exportCallsCSV() {
   const office = getOffice(officeId);
   const filtered = allCalls.filter(c => c.officeId === officeId);
 
-  const header = ["시간", "교무실", "학년", "반", "학생", "선생님", "과목", "요청 내용", "긴급도", "조용한 호출", "상태", "응답"];
+  const header = [
+    "시간",
+    "교무실",
+    "학년",
+    "반",
+    "학생",
+    "선생님",
+    "과목",
+    "요청 내용",
+    "긴급도",
+    "조용한 호출",
+    "상태",
+    "응답"
+  ];
 
   const rows = filtered.map(c => [
     fullTimeText(c.createdAt),
     c.officeName,
-    "3",
+    c.grade || "3",
     c.classNo,
     c.studentName,
     c.teacherTitle || c.teacherName,
