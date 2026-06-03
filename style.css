@@ -136,29 +136,29 @@ header::before {
   opacity: 0.95;
 }
 
-/* 아래 받침대 + 오른쪽 분필/지우개 */
+/* 오른쪽에 짧게 놓인 지우개/분필 받침대 */
 header::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  right: 18px;
   bottom: 0;
+  width: 250px;
   height: 44px;
   pointer-events: none;
   background:
-    /* 지우개 - 오른쪽 */
+    /* 지우개 - 오른쪽, 분필과 간격 확보 */
     linear-gradient(180deg, transparent 0, transparent 10px, #efbfd0 10px, #e7afc3 32px, transparent 32px),
-    /* 분필 - 오른쪽 */
+    /* 분필 - 지우개보다 더 오른쪽 */
     linear-gradient(180deg, transparent 0, transparent 18px, #ffffff 18px, #f1f1f1 28px, transparent 28px),
-    /* 받침대 */
+    /* 짧은 받침대 */
     linear-gradient(180deg, transparent 0, transparent 18px, rgba(126,79,38,0.92) 18px, rgba(189,135,81,0.96) 100%);
   background-size:
-    96px 100%,
-    70px 100%,
+    88px 100%,
+    64px 100%,
     100% 100%;
   background-position:
-    calc(100% - 88px) 0,
-    calc(100% - 26px) 0,
+    52px 0,
+    170px 0,
     0 0;
   background-repeat: no-repeat;
 }
@@ -581,14 +581,16 @@ textarea {
   }
 
   header::after {
+    right: 12px;
+    width: 190px;
     height: 40px;
     background-size:
-      82px 100%,
-      60px 100%,
+      72px 100%,
+      54px 100%,
       100% 100%;
     background-position:
-      calc(100% - 72px) 0,
-      calc(100% - 18px) 0,
+      34px 0,
+      126px 0,
       0 0;
   }
 }
