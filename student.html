@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>똑똑 학생용 - 교무실 호출</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=1.2" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">학생용 v1.1</span></h1>
+  <h1>똑똑 <span class="version">학생용 v1.2</span></h1>
   <p>교무실 문 앞에서 머뭇거리지 않도록, 조용히 똑똑.</p>
 </header>
 
@@ -31,7 +31,7 @@
     <div class="row">
       <div>
         <label>학년</label>
-        <input value="3학년" disabled />
+        <select id="studentGrade"></select>
       </div>
 
       <div>
@@ -106,8 +106,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="firebase-config.js"></script>
-<script src="common.js"></script>
+<script src="firebase-config.js?v=1.2"></script>
+<script src="common.js?v=1.2"></script>
 
 <script>
 let allCalls = [];
@@ -115,14 +115,17 @@ let allClassMessages = [];
 let newMessageIds = new Set();
 
 function initStudentUI() {
+  fillGradeSelect("studentGrade", "3");
   fillClassSelect("studentClass");
   fillOfficeSelect("officeSelect", "grade3");
   fillTeacherSelect("teacherSelect", document.getElementById("officeSelect").value);
 
   const savedProfile = JSON.parse(localStorage.getItem("ddokddok_profile") || "{}");
 
+  if (savedProfile.grade) document.getElementById("studentGrade").value = savedProfile.grade;
   if (savedProfile.classNo) document.getElementById("studentClass").value = savedProfile.classNo;
   if (savedProfile.name) document.getElementById("studentName").value = savedProfile.name;
+
   if (savedProfile.officeId) {
     document.getElementById("officeSelect").value = savedProfile.officeId;
     fillTeacherSelect("teacherSelect", savedProfile.officeId);
@@ -139,6 +142,7 @@ function initStudentUI() {
     document.getElementById("customReasonWrap").classList.toggle("hidden", v !== "기타");
   });
 
+  document.getElementById("studentGrade").addEventListener("change", renderTeacherMessages);
   document.getElementById("studentClass").addEventListener("change", renderTeacherMessages);
   document.getElementById("studentName").addEventListener("input", renderTeacherMessages);
   document.getElementById("knockBtn").addEventListener("click", sendStudentCall);
@@ -160,6 +164,7 @@ async function sendStudentCall() {
     return;
   }
 
+  const grade = document.getElementById("studentGrade").value;
   const classNo = document.getElementById("studentClass").value;
   const studentName = document.getElementById("studentName").value.trim();
   const officeId = document.getElementById("officeSelect").value;
@@ -186,12 +191,13 @@ async function sendStudentCall() {
   }
 
   localStorage.setItem("ddokddok_profile", JSON.stringify({
+    grade,
     classNo,
     name: studentName,
     officeId
   }));
 
-  const fingerprint = `3-${classNo}-${studentName}-${officeId}-${teacherName}`;
+  const fingerprint = `${grade}-${classNo}-${studentName}-${officeId}-${teacherName}`;
   const now = Date.now();
 
   const snap = await db.ref("calls")
@@ -205,7 +211,6 @@ async function sendStudentCall() {
     const c = child.val();
     const active = c.status !== "completed";
     const recent = now - (c.createdAt || 0) < 3 * 60 * 1000;
-
     if (active && recent) duplicated = true;
   });
 
@@ -219,13 +224,12 @@ async function sendStudentCall() {
     officeId,
     officeName: office.name,
     officeLocation: office.location,
-    grade: "3",
+    grade,
     classNo,
     studentName,
     teacherName,
     teacherTitle: teacher.title,
     teacherSubject: teacher.subject,
-    teacherDept: teacher.dept,
     reason,
     urgency,
     quiet,
@@ -250,7 +254,6 @@ function startListeners() {
 
   db.ref("calls").orderByChild("createdAt").limitToLast(200).on("value", snap => {
     const arr = [];
-
     snap.forEach(child => {
       arr.push({ id: child.key, ...child.val() });
     });
@@ -263,7 +266,6 @@ function startListeners() {
 
   db.ref("classMessages").orderByChild("createdAt").limitToLast(100).on("value", snap => {
     const arr = [];
-
     snap.forEach(child => {
       arr.push({ id: child.key, ...child.val() });
     });
@@ -272,30 +274,11 @@ function startListeners() {
 
     renderTeacherMessages();
   });
-
-  db.ref("classMessages").orderByChild("createdAt").limitToLast(30).on("child_added", snap => {
-    const msg = { id: snap.key, ...snap.val() };
-    const classNo = document.getElementById("studentClass").value;
-    const studentName = document.getElementById("studentName").value.trim();
-    const isMine = msg.classNo === classNo && msg.studentName === studentName;
-    const isNew = Date.now() - (msg.createdAt || 0) < 15000;
-
-    if (isMine && isNew) {
-      newMessageIds.add(msg.id);
-      renderTeacherMessages();
-
-      setTimeout(() => {
-        newMessageIds.delete(msg.id);
-        renderTeacherMessages();
-      }, 25000);
-    }
-  });
 }
 
 function renderCongestion() {
   const officeId = document.getElementById("officeSelect").value;
   const office = getOffice(officeId);
-
   const active = allCalls.filter(c => c.officeId === officeId && c.status !== "completed").length;
 
   let level = "원활";
@@ -325,13 +308,13 @@ function renderMyCalls() {
   const profile = JSON.parse(localStorage.getItem("ddokddok_profile") || "{}");
   const box = document.getElementById("myCalls");
 
-  if (!profile.name || !profile.classNo) {
-    box.textContent = "이름과 반을 입력하고 호출하면 최근 호출 상태가 표시됩니다.";
+  if (!profile.name || !profile.classNo || !profile.grade) {
+    box.textContent = "학년, 반, 이름을 입력하고 호출하면 최근 호출 상태가 표시됩니다.";
     return;
   }
 
   const mine = allCalls
-    .filter(c => c.studentName === profile.name && c.classNo === profile.classNo)
+    .filter(c => c.studentName === profile.name && c.classNo === profile.classNo && c.grade === profile.grade)
     .slice(0, 6);
 
   if (!mine.length) {
@@ -363,17 +346,18 @@ function renderMyCalls() {
 }
 
 function renderTeacherMessages() {
+  const grade = document.getElementById("studentGrade").value;
   const classNo = document.getElementById("studentClass").value;
   const studentName = document.getElementById("studentName").value.trim();
   const box = document.getElementById("teacherMessages");
 
-  if (!classNo || !studentName) {
-    box.textContent = "반과 이름을 입력하면 선생님이 보낸 호출이 표시됩니다.";
+  if (!grade || !classNo || !studentName) {
+    box.textContent = "학년, 반, 이름을 입력하면 선생님이 보낸 호출이 표시됩니다.";
     return;
   }
 
   const messages = allClassMessages
-    .filter(m => m.classNo === classNo && m.studentName === studentName)
+    .filter(m => m.grade === grade && m.classNo === classNo && m.studentName === studentName)
     .slice(0, 6);
 
   if (!messages.length) {
