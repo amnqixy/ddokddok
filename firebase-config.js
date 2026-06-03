@@ -1,4 +1,4 @@
-// 똑똑 v1.0 Firebase 설정 파일
+// 똑똑 v1.1 Firebase 설정 파일
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgeZHjGt1BMxCSI2i9jUoGNtMlDbHnk54",
