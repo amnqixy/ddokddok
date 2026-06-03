@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>똑똑 학생용 - 3학년 교무실 호출</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+<header>
+  <h1>똑똑 <span class="version">학생용 v1.0</span></h1>
+  <p>3학년 교무실(동국관 4층)에 선생님 호출을 보냅니다.</p>
+</header>
+
+<main>
+  <section id="firebaseWarning" class="card hidden">
+    <h2>Firebase 설정 필요</h2>
+    <p class="notice">
+      아직 실시간 연결 설정이 되지 않았습니다.
+      <b>firebase-config.js</b> 파일의 YOUR_... 부분을 Firebase 설정값으로 바꾸면 작동합니다.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>똑똑 보내기</h2>
+    <p class="notice">
+      교무실은 <b>3학년 교무실</b>로 고정되어 있습니다.
+    </p>
+
+    <div class="row">
+      <div>
+        <label>학년</label>
+        <input value="3학년" disabled />
+      </div>
+
+      <div>
+        <label>반</label>
+        <select id="studentClass"></select>
+      </div>
+    </div>
+
+    <label>이름</label>
+    <input id="studentName" placeholder="이름을 입력하세요" />
+
+    <label>선생님 선택</label>
+    <select id="teacherSelect"></select>
+
+    <label>요청 내용</label>
+    <select id="reasonSelect">
+      <option value="질문">질문</option>
+      <option value="상담">상담</option>
+      <option value="수행평가/과제 제출">수행평가/과제 제출</option>
+      <option value="진로·생기부 문의">진로·생기부 문의</option>
+      <option value="출결 문의">출결 문의</option>
+      <option value="분실물/안전 문제">분실물/안전 문제</option>
+      <option value="기타">기타</option>
+    </select>
+
+    <div id="customReasonWrap" class="hidden">
+      <label>기타 요청 내용</label>
+      <input id="customReason" placeholder="요청 내용을 짧게 입력하세요" />
+    </div>
+
+    <label>긴급도</label>
+    <select id="urgencySelect">
+      <option value="일반">일반</option>
+      <option value="빠른 확인 필요">빠른 확인 필요</option>
+      <option value="긴급">긴급</option>
+    </select>
+
+    <button class="btn big-knock" id="knockBtn">똑똑!</button>
+    <p id="studentMessage" class="notice"></p>
+  </section>
+
+  <section class="card">
+    <h2>3학년 교무실 현재 상태</h2>
+    <div id="congestionBox" class="notice">불러오는 중...</div>
+  </section>
+
+  <section class="card">
+    <h2>내 최근 호출</h2>
+    <div id="myCalls" class="notice">아직 호출 내역이 없습니다.</div>
+  </section>
+
+  <section class="card">
+    <h2>선생님이 보낸 호출</h2>
+    <div id="teacherMessages" class="notice">아직 받은 호출이 없습니다.</div>
+  </section>
+
+  <p class="footer-note">
+    교무실용 화면 주소는 <b>office.html</b>입니다.
+  </p>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="common.js"></script>
+
+<script>
+let allCalls = [];
+let allClassMessages = [];
+
+function initStudentUI() {
+  fillClassSelect("studentClass");
+  fillTeacherSelect("teacherSelect");
+
+  const savedProfile = JSON.parse(localStorage.getItem("ddokddok_profile") || "{}");
+
+  if (savedProfile.classNo) {
+    document.getElementById("studentClass").value = savedProfile.classNo;
+  }
+
+  if (savedProfile.name) {
+    document.getElementById("studentName").value = savedProfile.name;
+  }
+
+  document.getElementById("reasonSelect").addEventListener("change", () => {
+    const v = document.getElementById("reasonSelect").value;
+    document.getElementById("customReasonWrap").classList.toggle("hidden", v !== "기타");
+  });
+
+  document.getElementById("studentClass").addEventListener("change", renderTeacherMessages);
+  document.getElementById("studentName").addEventListener("input", renderTeacherMessages);
+  document.getElementById("knockBtn").addEventListener("click", sendStudentCall);
+}
+
+function getReasonText() {
+  const reason = document.getElementById("reasonSelect").value;
+
+  if (reason === "기타") {
+    return document.getElementById("customReason").value.trim() || "기타";
+  }
+
+  return reason;
+}
+
+async function sendStudentCall() {
+  if (!db) {
+    alert("Firebase 설정이 필요합니다.");
+    return;
+  }
+
+  const classNo = document.getElementById("studentClass").value;
+  const studentName = document.getElementById("studentName").value.trim();
+  const teacherName = document.getElementById("teacherSelect").value;
+  const teacher = TEACHERS.find(t => t.name === teacherName);
+  const reason = getReasonText();
+  const urgency = document.getElementById("urgencySelect").value;
+
+  if (!studentName) {
+    alert("이름을 입력해 주세요.");
+    return;
+  }
+
+  if (urgency === "긴급") {
+    const ok = confirm("긴급 호출은 안전, 건강, 분실 등 즉시 확인이 필요한 경우에만 사용해 주세요. 긴급 호출로 보낼까요?");
+    if (!ok) return;
+  }
+
+  localStorage.setItem("ddokddok_profile", JSON.stringify({
+    classNo,
+    name: studentName
+  }));
+
+  const fingerprint = `3-${classNo}-${studentName}-${teacherName}`;
+  const now = Date.now();
+
+  const snap = await db.ref("calls")
+    .orderByChild("fingerprint")
+    .equalTo(fingerprint)
+    .once("value");
+
+  let duplicated = false;
+
+  snap.forEach(child => {
+    const c = child.val();
+    const active = c.status !== "completed";
+    const recent = now - (c.createdAt || 0) < 3 * 60 * 1000;
+
+    if (active && recent) duplicated = true;
+  });
+
+  if (duplicated) {
+    document.getElementById("studentMessage").textContent =
+      "이미 같은 선생님께 보낸 호출이 있습니다. 잠시만 기다려 주세요.";
+    return;
+  }
+
+  const call = {
+    office: OFFICE_NAME,
+    officeLocation: OFFICE_LOCATION,
+    grade: "3",
+    classNo,
+    studentName,
+    teacherName,
+    teacherSubject: teacher ? teacher.subject : "",
+    reason,
+    urgency,
+    status: "pending",
+    response: "",
+    fingerprint,
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
+    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    version: APP_VERSION
+  };
+
+  await db.ref("calls").push(call);
+
+  document.getElementById("studentMessage").textContent =
+    `${teacherName} 선생님께 똑똑 호출을 보냈습니다.`;
+}
+
+function startListeners() {
+  if (!db) return;
+
+  db.ref("calls").orderByChild("createdAt").limitToLast(100).on("value", snap => {
+    const arr = [];
+
+    snap.forEach(child => {
+      arr.push({ id: child.key, ...child.val() });
+    });
+
+    allCalls = arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    renderCongestion();
+    renderMyCalls();
+  });
+
+  db.ref("classMessages").orderByChild("createdAt").limitToLast(100).on("value", snap => {
+    const arr = [];
+
+    snap.forEach(child => {
+      arr.push({ id: child.key, ...child.val() });
+    });
+
+    allClassMessages = arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    renderTeacherMessages();
+  });
+}
+
+function renderCongestion() {
+  const active = allCalls.filter(c => c.status !== "completed").length;
+
+  let level = "원활";
+  let cls = "completed";
+  let desc = "현재 대기 호출이 적습니다.";
+
+  if (active >= 6) {
+    level = "혼잡";
+    cls = "urgent";
+    desc = "호출이 많이 쌓여 있습니다. 급하지 않다면 잠시 기다려 주세요.";
+  } else if (active >= 3) {
+    level = "보통";
+    cls = "pending";
+    desc = "처리 중인 호출이 몇 건 있습니다.";
+  }
+
+  document.getElementById("congestionBox").innerHTML = `
+    <span class="pill ${cls}">${level}</span>
+    <p class="notice" style="margin:8px 0 0;">
+      현재 대기/확인 중 호출: <b>${active}</b>건<br>${desc}
+    </p>
+  `;
+}
+
+function renderMyCalls() {
+  const profile = JSON.parse(localStorage.getItem("ddokddok_profile") || "{}");
+  const box = document.getElementById("myCalls");
+
+  if (!profile.name || !profile.classNo) {
+    box.textContent = "이름과 반을 입력하고 호출하면 최근 호출 상태가 표시됩니다.";
+    return;
+  }
+
+  const mine = allCalls
+    .filter(c => c.studentName === profile.name && c.classNo === profile.classNo)
+    .slice(0, 5);
+
+  if (!mine.length) {
+    box.textContent = "아직 호출 내역이 없습니다.";
+    return;
+  }
+
+  box.innerHTML = mine.map(c => `
+    <div class="call-card ${c.urgency === "긴급" ? "urgent" : ""}">
+      <div class="call-title">${safe(c.teacherName)} 선생님께 보낸 호출</div>
+      <div class="call-meta">
+        요청 내용: ${safe(c.reason)} · 긴급도: ${safe(c.urgency)} · 시간: ${fullTimeText(c.createdAt)}<br>
+        상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+        ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderTeacherMessages() {
+  const classNo = document.getElementById("studentClass").value;
+  const studentName = document.getElementById("studentName").value.trim();
+  const box = document.getElementById("teacherMessages");
+
+  if (!classNo || !studentName) {
+    box.textContent = "반과 이름을 입력하면 선생님이 보낸 호출이 표시됩니다.";
+    return;
+  }
+
+  const messages = allClassMessages
+    .filter(m => m.classNo === classNo && m.studentName === studentName)
+    .slice(0, 5);
+
+  if (!messages.length) {
+    box.textContent = "아직 받은 호출이 없습니다.";
+    return;
+  }
+
+  box.innerHTML = messages.map(m => `
+    <div class="call-card">
+      <div class="call-title">${safe(m.studentName)} 학생 호출</div>
+      <div class="call-meta">
+        ${safe(m.teacherName)} 선생님: ${safe(m.message)}<br>
+        시간: ${fullTimeText(m.createdAt)}
+      </div>
+    </div>
+  `).join("");
+}
+
+initStudentUI();
+
+if (initFirebaseApp()) {
+  startListeners();
+} else {
+  document.getElementById("congestionBox").textContent = "Firebase 설정 후 표시됩니다.";
+}
+</script>
+</body>
+</html>
