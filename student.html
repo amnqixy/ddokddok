@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>똑똑 학생용 - 3학년 교무실 호출</title>
+  <title>똑똑 학생용 - 교무실 호출</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">학생용 v1.0</span></h1>
-  <p>3학년 교무실(동국관 4층)에 선생님 호출을 보냅니다.</p>
+  <h1>똑똑 <span class="version">학생용 v1.1</span></h1>
+  <p>교무실 문 앞에서 머뭇거리지 않도록, 조용히 똑똑.</p>
 </header>
 
 <main>
@@ -18,14 +18,14 @@
     <h2>Firebase 설정 필요</h2>
     <p class="notice">
       아직 실시간 연결 설정이 되지 않았습니다.
-      <b>firebase-config.js</b> 파일의 YOUR_... 부분을 Firebase 설정값으로 바꾸면 작동합니다.
+      <b>firebase-config.js</b> 파일을 확인해 주세요.
     </p>
   </section>
 
-  <section class="card">
+  <section class="card hero-card">
     <h2>똑똑 보내기</h2>
     <p class="notice">
-      교무실은 <b>3학년 교무실</b>로 고정되어 있습니다.
+      교무실과 선생님을 선택한 뒤, 요청 내용을 담아 호출을 보낼 수 있습니다.
     </p>
 
     <div class="row">
@@ -42,6 +42,9 @@
 
     <label>이름</label>
     <input id="studentName" placeholder="이름을 입력하세요" />
+
+    <label>교무실 선택</label>
+    <select id="officeSelect"></select>
 
     <label>선생님 선택</label>
     <select id="teacherSelect"></select>
@@ -69,12 +72,19 @@
       <option value="긴급">긴급</option>
     </select>
 
+    <div class="switch-box">
+      <label>
+        <input type="checkbox" id="quietCall" />
+        조용히 똑똑하기: 교무실 음성 안내 없이 시각 알림으로만 보냅니다.
+      </label>
+    </div>
+
     <button class="btn big-knock" id="knockBtn">똑똑!</button>
     <p id="studentMessage" class="notice"></p>
   </section>
 
   <section class="card">
-    <h2>3학년 교무실 현재 상태</h2>
+    <h2>선택한 교무실 현재 상태</h2>
     <div id="congestionBox" class="notice">불러오는 중...</div>
   </section>
 
@@ -85,6 +95,7 @@
 
   <section class="card">
     <h2>선생님이 보낸 호출</h2>
+    <p class="notice">선생님이 학생을 부르면 이곳에 크게 표시됩니다.</p>
     <div id="teacherMessages" class="notice">아직 받은 호출이 없습니다.</div>
   </section>
 
@@ -101,20 +112,27 @@
 <script>
 let allCalls = [];
 let allClassMessages = [];
+let newMessageIds = new Set();
 
 function initStudentUI() {
   fillClassSelect("studentClass");
-  fillTeacherSelect("teacherSelect");
+  fillOfficeSelect("officeSelect", "grade3");
+  fillTeacherSelect("teacherSelect", document.getElementById("officeSelect").value);
 
   const savedProfile = JSON.parse(localStorage.getItem("ddokddok_profile") || "{}");
 
-  if (savedProfile.classNo) {
-    document.getElementById("studentClass").value = savedProfile.classNo;
+  if (savedProfile.classNo) document.getElementById("studentClass").value = savedProfile.classNo;
+  if (savedProfile.name) document.getElementById("studentName").value = savedProfile.name;
+  if (savedProfile.officeId) {
+    document.getElementById("officeSelect").value = savedProfile.officeId;
+    fillTeacherSelect("teacherSelect", savedProfile.officeId);
   }
 
-  if (savedProfile.name) {
-    document.getElementById("studentName").value = savedProfile.name;
-  }
+  document.getElementById("officeSelect").addEventListener("change", () => {
+    const officeId = document.getElementById("officeSelect").value;
+    fillTeacherSelect("teacherSelect", officeId);
+    renderCongestion();
+  });
 
   document.getElementById("reasonSelect").addEventListener("change", () => {
     const v = document.getElementById("reasonSelect").value;
@@ -144,13 +162,21 @@ async function sendStudentCall() {
 
   const classNo = document.getElementById("studentClass").value;
   const studentName = document.getElementById("studentName").value.trim();
+  const officeId = document.getElementById("officeSelect").value;
+  const office = getOffice(officeId);
   const teacherName = document.getElementById("teacherSelect").value;
-  const teacher = TEACHERS.find(t => t.name === teacherName);
+  const teacher = getTeacherByName(teacherName, officeId);
   const reason = getReasonText();
   const urgency = document.getElementById("urgencySelect").value;
+  const quiet = document.getElementById("quietCall").checked;
 
   if (!studentName) {
     alert("이름을 입력해 주세요.");
+    return;
+  }
+
+  if (!teacher) {
+    alert("선생님을 선택해 주세요.");
     return;
   }
 
@@ -161,10 +187,11 @@ async function sendStudentCall() {
 
   localStorage.setItem("ddokddok_profile", JSON.stringify({
     classNo,
-    name: studentName
+    name: studentName,
+    officeId
   }));
 
-  const fingerprint = `3-${classNo}-${studentName}-${teacherName}`;
+  const fingerprint = `3-${classNo}-${studentName}-${officeId}-${teacherName}`;
   const now = Date.now();
 
   const snap = await db.ref("calls")
@@ -189,15 +216,19 @@ async function sendStudentCall() {
   }
 
   const call = {
-    office: OFFICE_NAME,
-    officeLocation: OFFICE_LOCATION,
+    officeId,
+    officeName: office.name,
+    officeLocation: office.location,
     grade: "3",
     classNo,
     studentName,
     teacherName,
-    teacherSubject: teacher ? teacher.subject : "",
+    teacherTitle: teacher.title,
+    teacherSubject: teacher.subject,
+    teacherDept: teacher.dept,
     reason,
     urgency,
+    quiet,
     status: "pending",
     response: "",
     fingerprint,
@@ -209,13 +240,15 @@ async function sendStudentCall() {
   await db.ref("calls").push(call);
 
   document.getElementById("studentMessage").textContent =
-    `${teacherName} 선생님께 똑똑 호출을 보냈습니다.`;
+    quiet
+      ? `${teacher.title}께 조용한 똑똑 호출을 보냈습니다.`
+      : `${teacher.title}께 똑똑 호출을 보냈습니다.`;
 }
 
 function startListeners() {
   if (!db) return;
 
-  db.ref("calls").orderByChild("createdAt").limitToLast(100).on("value", snap => {
+  db.ref("calls").orderByChild("createdAt").limitToLast(200).on("value", snap => {
     const arr = [];
 
     snap.forEach(child => {
@@ -239,14 +272,35 @@ function startListeners() {
 
     renderTeacherMessages();
   });
+
+  db.ref("classMessages").orderByChild("createdAt").limitToLast(30).on("child_added", snap => {
+    const msg = { id: snap.key, ...snap.val() };
+    const classNo = document.getElementById("studentClass").value;
+    const studentName = document.getElementById("studentName").value.trim();
+    const isMine = msg.classNo === classNo && msg.studentName === studentName;
+    const isNew = Date.now() - (msg.createdAt || 0) < 15000;
+
+    if (isMine && isNew) {
+      newMessageIds.add(msg.id);
+      renderTeacherMessages();
+
+      setTimeout(() => {
+        newMessageIds.delete(msg.id);
+        renderTeacherMessages();
+      }, 25000);
+    }
+  });
 }
 
 function renderCongestion() {
-  const active = allCalls.filter(c => c.status !== "completed").length;
+  const officeId = document.getElementById("officeSelect").value;
+  const office = getOffice(officeId);
+
+  const active = allCalls.filter(c => c.officeId === officeId && c.status !== "completed").length;
 
   let level = "원활";
   let cls = "completed";
-  let desc = "현재 대기 호출이 적습니다.";
+  let desc = `${office.name}의 대기 호출이 적습니다.`;
 
   if (active >= 6) {
     level = "혼잡";
@@ -259,9 +313,10 @@ function renderCongestion() {
   }
 
   document.getElementById("congestionBox").innerHTML = `
-    <span class="pill ${cls}">${level}</span>
+    <span class="pill ${cls}">${safe(level)}</span>
     <p class="notice" style="margin:8px 0 0;">
-      현재 대기/확인 중 호출: <b>${active}</b>건<br>${desc}
+      ${safe(office.name)} ${office.location ? `(${safe(office.location)})` : ""}<br>
+      현재 대기/확인 중 호출: <b>${active}</b>건<br>${safe(desc)}
     </p>
   `;
 }
@@ -277,23 +332,34 @@ function renderMyCalls() {
 
   const mine = allCalls
     .filter(c => c.studentName === profile.name && c.classNo === profile.classNo)
-    .slice(0, 5);
+    .slice(0, 6);
 
   if (!mine.length) {
     box.textContent = "아직 호출 내역이 없습니다.";
     return;
   }
 
-  box.innerHTML = mine.map(c => `
-    <div class="call-card ${c.urgency === "긴급" ? "urgent" : ""}">
-      <div class="call-title">${safe(c.teacherName)} 선생님께 보낸 호출</div>
-      <div class="call-meta">
-        요청 내용: ${safe(c.reason)} · 긴급도: ${safe(c.urgency)} · 시간: ${fullTimeText(c.createdAt)}<br>
-        상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
-        ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
+  box.innerHTML = mine.map(c => {
+    const uClass = urgencyClass(c.urgency);
+    const quietClass = c.quiet ? "quiet" : "";
+
+    return `
+      <div class="call-card ${uClass} ${quietClass}">
+        <div class="call-title">
+          ${c.quiet ? `<span class="pill quiet">조용한 호출</span> ` : ""}
+          ${c.urgency === "빠른 확인 필요" ? `<span class="pill fast">빠른 확인 필요</span> ` : ""}
+          ${c.urgency === "긴급" ? `<span class="pill urgent">긴급</span> ` : ""}
+          ${safe(c.teacherTitle || c.teacherName + " 선생님")}께 보낸 호출
+        </div>
+        <div class="call-meta">
+          교무실: ${safe(c.officeName || "-")}<br>
+          요청 내용: ${safe(c.reason)} · 시간: ${fullTimeText(c.createdAt)}<br>
+          상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+          ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function renderTeacherMessages() {
@@ -308,22 +374,26 @@ function renderTeacherMessages() {
 
   const messages = allClassMessages
     .filter(m => m.classNo === classNo && m.studentName === studentName)
-    .slice(0, 5);
+    .slice(0, 6);
 
   if (!messages.length) {
     box.textContent = "아직 받은 호출이 없습니다.";
     return;
   }
 
-  box.innerHTML = messages.map(m => `
-    <div class="call-card">
-      <div class="call-title">${safe(m.studentName)} 학생 호출</div>
-      <div class="call-meta">
-        ${safe(m.teacherName)} 선생님: ${safe(m.message)}<br>
-        시간: ${fullTimeText(m.createdAt)}
+  box.innerHTML = messages.map(m => {
+    const isNew = newMessageIds.has(m.id);
+
+    return `
+      <div class="call-card teacher-alert ${isNew ? "new-call" : ""}">
+        <div class="call-title">🔔 ${safe(m.studentName)} 학생 호출</div>
+        <div class="call-meta">
+          ${safe(m.teacherTitle || m.teacherName + " 선생님")}: <b>${safe(m.message)}</b><br>
+          교무실: ${safe(m.officeName || "-")} · 시간: ${fullTimeText(m.createdAt)}
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 initStudentUI();
