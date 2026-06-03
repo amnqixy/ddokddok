@@ -1,19 +1,25 @@
-/* 똑똑 v1.2 공통 디자인 */
+/* 똑똑 v1.3 공통 디자인 */
 
 :root {
-  --bg: #f7efe3;
-  --card: rgba(255, 252, 246, 0.96);
-  --ink: #2f261d;
-  --muted: #7b6f63;
-  --line: #eadcc8;
+  --bg-top: #f8f5ee;
+  --bg-mid: #f4ebdc;
+  --bg-bottom: #eedfc9;
 
-  --wood: #8b5e34;
-  --wood-dark: #5b351b;
-  --wood-light: #c8915b;
+  --card: rgba(255, 252, 246, 0.95);
+  --ink: #2f281f;
+  --muted: #7d7266;
+  --line: #e8d8c0;
 
-  --main: #9b6b43;
-  --main2: #fff3df;
-  --blue: #6aa6b8;
+  --wood: #a06a3b;
+  --wood-dark: #6a4120;
+  --wood-light: #d0a26d;
+
+  --chalk: #4a6651;
+  --chalk-deep: #33473a;
+  --sun: #fff3c9;
+
+  --main: #8c6442;
+  --accent: #7eb3c1;
 
   --good: #15803d;
   --warn: #ea580c;
@@ -31,128 +37,149 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  color: var(--ink);
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(255,255,255,0.85), transparent 22%),
-    radial-gradient(circle at 85% 15%, rgba(255,221,168,0.55), transparent 28%),
-    linear-gradient(180deg, #fff8ee 0%, #f4e4cd 50%, #ead4b8 100%);
+  padding: 0;
 }
 
+body {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0) 20%),
+    radial-gradient(circle at 10% 10%, rgba(255,255,255,0.95), transparent 20%),
+    radial-gradient(circle at 85% 14%, rgba(255,244,199,0.9), transparent 26%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 46%, var(--bg-bottom) 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 창살 같은 햇살 느낌 */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
-  opacity: 0.16;
-  background-image:
-    linear-gradient(90deg, rgba(91,53,27,0.20) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,0.55) 1px, transparent 1px);
-  background-size: 70px 70px, 22px 22px;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 18%,
+      rgba(255,250,228,0.55) 22%,
+      rgba(255,250,228,0.12) 35%,
+      rgba(255,255,255,0) 48%
+    );
+  opacity: 0.8;
 }
 
 header {
   position: relative;
-  padding: 24px 18px 18px;
-  color: white;
+  padding: 20px 18px 18px;
+  color: #fffef9;
   background:
-    linear-gradient(135deg, rgba(86,48,22,0.95), rgba(150,96,48,0.96)),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255,255,255,0.08) 0,
-      rgba(255,255,255,0.08) 14px,
-      rgba(0,0,0,0.06) 14px,
-      rgba(0,0,0,0.06) 30px
-    );
-  box-shadow: 0 8px 28px rgba(91,53,27,0.25);
-  border-bottom: 5px solid rgba(255,236,204,0.45);
+    linear-gradient(180deg, var(--chalk) 0%, var(--chalk-deep) 100%);
+  border-top: 12px solid var(--wood);
+  border-bottom: 10px solid var(--wood);
+  box-shadow: 0 8px 24px rgba(60, 39, 18, 0.18);
 }
 
-header::after {
-  content: "🚪";
+header::before {
+  content: "";
   position: absolute;
-  right: 18px;
-  top: 12px;
-  font-size: 54px;
-  opacity: 0.20;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 2px,
+      rgba(0,0,0,0.01) 2px,
+      rgba(0,0,0,0.01) 4px
+    );
+  pointer-events: none;
 }
 
 header h1 {
   margin: 0;
   font-size: 27px;
-  letter-spacing: -0.8px;
+  letter-spacing: -0.7px;
+  position: relative;
+  z-index: 1;
 }
 
 header p {
   margin: 7px 0 0;
   font-size: 13px;
-  opacity: 0.94;
-  line-height: 1.5;
+  line-height: 1.55;
+  opacity: 0.96;
+  position: relative;
+  z-index: 1;
 }
 
 main {
   max-width: 980px;
   margin: 0 auto;
-  padding: 18px 14px 28px;
+  padding: 18px 14px 30px;
 }
 
 .version {
   display: inline-block;
-  margin-left: 6px;
+  margin-left: 7px;
   padding: 2px 9px;
   font-size: 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.22);
-  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.22);
 }
 
 .card {
   position: relative;
   background:
-    linear-gradient(180deg, rgba(255,253,249,0.98), rgba(255,248,238,0.96));
+    linear-gradient(180deg, rgba(255,253,249,0.97), rgba(255,248,239,0.95));
   border: 1px solid var(--line);
   border-radius: 24px;
   padding: 16px;
   margin-bottom: 14px;
   box-shadow:
-    0 14px 32px rgba(91,53,27,0.11),
-    inset 0 1px 0 rgba(255,255,255,0.9);
-  backdrop-filter: blur(8px);
+    0 14px 30px rgba(91,53,27,0.09),
+    inset 0 1px 0 rgba(255,255,255,0.75);
+  overflow: hidden;
 }
 
 .card::before {
   content: "";
   position: absolute;
-  left: 18px;
+  left: 16px;
   top: 0;
-  width: 52px;
+  width: 56px;
   height: 5px;
-  border-radius: 0 0 8px 8px;
-  background: rgba(139,94,52,0.28);
+  background: rgba(160, 106, 59, 0.25);
+  border-radius: 0 0 10px 10px;
 }
 
 .hero-card {
-  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,252,246,0.97), rgba(255,244,224,0.96));
 }
 
 .hero-card::after {
-  content: "똑똑";
+  /* 예전 반투명 "똑똑" 제거 */
+  content: "";
   position: absolute;
-  right: 18px;
-  bottom: 8px;
-  font-size: 58px;
-  font-weight: 950;
-  color: rgba(139,94,52,0.10);
-  letter-spacing: -3px;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(125deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,248,216,0.44) 18%,
+      rgba(255,255,255,0.06) 34%,
+      rgba(255,255,255,0) 50%);
 }
 
 .card h2 {
   margin: 0 0 10px;
   font-size: 18px;
   letter-spacing: -0.3px;
+  color: #4e3a28;
 }
 
 label {
@@ -160,7 +187,7 @@ label {
   font-size: 13px;
   color: var(--muted);
   margin: 10px 0 5px;
-  font-weight: 850;
+  font-weight: 800;
 }
 
 input,
@@ -174,13 +201,14 @@ textarea {
   background: #fffdf9;
   color: var(--ink);
   outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #b88652;
-  box-shadow: 0 0 0 4px rgba(184,134,82,0.16);
+  border-color: #bf8a56;
+  box-shadow: 0 0 0 4px rgba(191,138,86,0.15);
 }
 
 textarea {
@@ -206,17 +234,17 @@ textarea {
   padding: 11px 14px;
   font: inherit;
   font-weight: 900;
-  background: linear-gradient(135deg, #9b6b43, #6aa6b8);
   color: white;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   text-align: center;
-  box-shadow: 0 8px 18px rgba(91,53,27,0.18);
+  background: linear-gradient(135deg, var(--wood), var(--accent));
+  box-shadow: 0 8px 18px rgba(91,53,27,0.16);
 }
 
 .btn.secondary {
-  background: linear-gradient(135deg, #5b351b, #a47545);
+  background: linear-gradient(135deg, var(--wood-dark), var(--wood));
 }
 
 .btn.light {
@@ -241,8 +269,7 @@ textarea {
   padding: 17px;
   margin-top: 13px;
   border-radius: 22px;
-  background:
-    linear-gradient(135deg, #8b5e34, #6aa6b8);
+  background: linear-gradient(135deg, var(--wood), #7aa9b5);
 }
 
 .notice {
@@ -380,9 +407,9 @@ textarea {
 }
 
 .call-actions button.primary {
-  background: #8b5e34;
+  background: var(--wood);
   color: white;
-  border-color: #8b5e34;
+  border-color: var(--wood);
 }
 
 .call-actions button.done {
@@ -424,8 +451,8 @@ textarea {
 
 .teacher-alert {
   border: 2px solid #f59e0b;
-  background: linear-gradient(135deg, #fff7ed, #fff1f2);
-  box-shadow: 0 0 0 4px rgba(245,158,11,0.12), 0 10px 24px rgba(245,158,11,0.12);
+  background: linear-gradient(135deg, #fff7ed, #fff6ef);
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.10), 0 10px 24px rgba(245,158,11,0.10);
 }
 
 .new-call {
@@ -434,15 +461,15 @@ textarea {
 
 @keyframes warmPulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(249,115,22,0.45), 0 8px 18px rgba(91,53,27,0.08);
+    box-shadow: 0 0 0 0 rgba(255,193,79,0.45), 0 8px 18px rgba(91,53,27,0.08);
     transform: translateY(0);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(249,115,22,0.10), 0 12px 24px rgba(91,53,27,0.14);
+    box-shadow: 0 0 0 8px rgba(255,193,79,0.12), 0 12px 24px rgba(91,53,27,0.14);
     transform: translateY(-1px);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(249,115,22,0), 0 8px 18px rgba(91,53,27,0.08);
+    box-shadow: 0 0 0 0 rgba(255,193,79,0), 0 8px 18px rgba(91,53,27,0.08);
     transform: translateY(0);
   }
 }
@@ -468,9 +495,5 @@ textarea {
 
   header h1 {
     font-size: 22px;
-  }
-
-  .hero-card::after {
-    font-size: 44px;
   }
 }
