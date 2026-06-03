@@ -1,28 +1,28 @@
-/* 똑똑 v1.5 공통 디자인 */
+/* 똑똑 v1.6 공통 디자인 */
 
-@import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Jua&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap');
 
 :root {
-  --sky: #eef9ff;
-  --light-cream: #fffaf1;
-  --cream: #fff5e9;
-  --warm-floor: #ecd7bb;
-  --warm-floor-deep: #dfc39e;
+  --sky: #f3fbff;
+  --light-cream: #fffaf2;
+  --cream: #fff6eb;
+  --warm-floor: #ecd8bd;
+  --warm-floor-deep: #e3c7a1;
 
-  --card: rgba(255, 252, 246, 0.88);
-  --card-strong: rgba(255, 251, 245, 0.95);
+  --card: rgba(255, 252, 246, 0.9);
+  --card-strong: rgba(255, 251, 245, 0.96);
 
   --ink: #3a2f25;
   --muted: #817466;
   --line: #ead8bd;
 
-  --wood: #b9854f;
-  --wood-deep: #72441f;
-  --wood-soft: #d9af7b;
+  --wood: #c6945a;
+  --wood-deep: #8a5a2f;
+  --wood-soft: #ddb27d;
 
-  --chalkboard: #5d7b68;
-  --chalkboard-deep: #445b4b;
-  --chalk: rgba(255,255,255,0.9);
+  --chalkboard: #4f745d;
+  --chalkboard-deep: #3e5f4c;
+  --chalkboard-soft: #5c8169;
 
   --blue: #90c7d5;
   --good: #15803d;
@@ -53,12 +53,12 @@ body {
   color: var(--ink);
   overflow-x: hidden;
   background:
-    radial-gradient(circle at 8% 10%, rgba(255,255,255,0.96), transparent 18%),
-    radial-gradient(circle at 16% 22%, rgba(255,250,227,0.88), transparent 16%),
-    linear-gradient(180deg, #f4fbff 0%, #fffaf1 34%, #f6ead9 72%, #ecd6b8 100%);
+    radial-gradient(circle at 10% 12%, rgba(255,255,255,0.95), transparent 16%),
+    radial-gradient(circle at 18% 18%, rgba(255,244,205,0.75), transparent 14%),
+    linear-gradient(180deg, #f5fbff 0%, #fff9f0 35%, #f5e7d5 72%, #ecd6b8 100%);
 }
 
-/* 왼쪽에서 오른쪽으로 비스듬히 들어오는 햇살 */
+/* 왼쪽 위 창문에서 오른쪽 아래로 들어오는 부드러운 햇살 */
 body::before {
   content: "";
   position: fixed;
@@ -69,171 +69,140 @@ body::before {
     linear-gradient(135deg,
       rgba(255,255,255,0) 0%,
       rgba(255,255,255,0) 10%,
-      rgba(255,247,210,0.72) 17%,
-      rgba(255,247,210,0.30) 27%,
-      rgba(255,255,255,0) 38%
+      rgba(255,247,210,0.62) 17%,
+      rgba(255,247,210,0.24) 27%,
+      rgba(255,255,255,0) 39%
     ),
     linear-gradient(135deg,
-      rgba(255,255,255,0) 9%,
-      rgba(255,255,255,0.34) 16%,
-      rgba(255,255,255,0.08) 28%,
+      rgba(255,255,255,0) 14%,
+      rgba(255,255,255,0.26) 20%,
+      rgba(255,255,255,0.06) 30%,
       rgba(255,255,255,0) 40%
-    ),
-    linear-gradient(135deg,
-      rgba(255,255,255,0) 24%,
-      rgba(255,247,210,0.26) 31%,
-      rgba(255,255,255,0) 42%
     );
   opacity: 0.95;
 }
 
-/* 교실 바닥 느낌 */
+/* 바닥 느낌 */
 body::after {
   content: "";
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 36vh;
+  height: 34vh;
   pointer-events: none;
   z-index: -3;
   background:
     repeating-linear-gradient(
       90deg,
-      rgba(160, 104, 51, 0.09) 0,
-      rgba(160, 104, 51, 0.09) 2px,
+      rgba(160, 104, 51, 0.08) 0,
+      rgba(160, 104, 51, 0.08) 2px,
       transparent 2px,
-      transparent 84px
+      transparent 86px
     ),
-    linear-gradient(180deg, rgba(255,255,255,0), rgba(188,128,70,0.18));
+    linear-gradient(180deg, rgba(255,255,255,0), rgba(188,128,70,0.16));
 }
 
 header {
   position: relative;
-  padding: 20px 18px 22px;
-  color: #fffef8;
+  padding: 24px 18px 26px;
   overflow: hidden;
+  color: #fffef8;
   background:
-    /* chalk tray / 하단 받침대 */
-    linear-gradient(180deg, transparent calc(100% - 18px), rgba(112,72,36,0.95) calc(100% - 18px), rgba(179,126,72,0.98) 100%),
-    /* 지우개 */
-    linear-gradient(180deg, transparent 0, transparent calc(100% - 30px), transparent calc(100% - 30px)),
-    /* chalkboard */
-    linear-gradient(180deg, var(--chalkboard) 0%, var(--chalkboard-deep) 100%);
-  border-top: 10px solid var(--wood);
-  border-bottom: 10px solid var(--wood);
-  box-shadow: 0 8px 24px rgba(80, 50, 25, 0.18);
+    linear-gradient(180deg, var(--chalkboard-soft) 0%, var(--chalkboard) 45%, var(--chalkboard-deep) 100%);
+  border: 18px solid var(--wood);
+  border-radius: 0 0 18px 18px;
+  box-shadow:
+    0 10px 26px rgba(80, 50, 25, 0.18),
+    inset 0 0 0 2px rgba(126, 79, 38, 0.18);
 }
 
-/* 칠판 질감 + 분필/지우개 장식 */
+/* 칠판 표면 질감 */
 header::before {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    /* chalk dust */
-    radial-gradient(circle at 18% 22%, rgba(255,255,255,0.08) 0 2px, transparent 3px),
-    radial-gradient(circle at 42% 17%, rgba(255,255,255,0.06) 0 2px, transparent 3px),
-    radial-gradient(circle at 75% 26%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,0.04) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 22%, rgba(255,255,255,0.03) 0 2px, transparent 3px),
+    linear-gradient(12deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 35%),
+    linear-gradient(-10deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0) 30%),
     repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.018) 0px,
-      rgba(255,255,255,0.018) 3px,
-      rgba(0,0,0,0.01) 3px,
-      rgba(0,0,0,0.01) 6px
-    ),
-    /* 지우개 */
-    linear-gradient(0deg, transparent calc(100% - 34px), #d2b38e calc(100% - 34px), #c89d69 calc(100% - 20px), transparent calc(100% - 20px)),
-    linear-gradient(0deg, transparent calc(100% - 33px), #7e5832 calc(100% - 33px), #7e5832 calc(100% - 31px), transparent calc(100% - 31px)),
-    /* 분필 1 */
-    linear-gradient(135deg, transparent calc(100% - 35px), #ffffff calc(100% - 35px), #f4f4f4 calc(100% - 31px), transparent calc(100% - 31px)),
-    /* 분필 2 */
-    linear-gradient(135deg, transparent calc(100% - 35px), #ffe8ef calc(100% - 35px), #ffd7e2 calc(100% - 31px), transparent calc(100% - 31px));
-  background-size:
-    auto,
-    auto,
-    auto,
-    auto,
-    120px 100%,
-    120px 100%,
-    100px 100%,
-    140px 100%;
-  background-position:
-    0 0,
-    0 0,
-    0 0,
-    0 0,
-    calc(100% - 64px) 0,
-    calc(100% - 64px) 0,
-    calc(100% - 120px) 0,
-    calc(100% - 20px) 0;
-  background-repeat: no-repeat;
+      rgba(255,255,255,0.010) 0px,
+      rgba(255,255,255,0.010) 3px,
+      rgba(0,0,0,0.008) 3px,
+      rgba(0,0,0,0.008) 6px
+    );
   pointer-events: none;
+  opacity: 0.95;
 }
 
-/* 오른쪽 위 안내 종이 */
+/* 칠판 아래 분필/지우개 */
 header::after {
-  content: "안내\A 조용한 호출도\A 사용할 수 있어요";
-  white-space: pre-line;
+  content: "";
   position: absolute;
-  right: 18px;
-  top: 14px;
-  width: 108px;
-  padding: 10px 10px 12px;
-  border-radius: 4px;
-  background:
-    linear-gradient(180deg, rgba(255,253,240,0.98), rgba(255,247,220,0.96));
-  color: #5f513d;
-  font-size: 11px;
-  line-height: 1.45;
-  text-align: center;
-  box-shadow:
-    0 8px 18px rgba(0,0,0,0.12),
-    inset 0 1px 0 rgba(255,255,255,0.9);
-  transform: rotate(4deg);
-  border: 1px solid rgba(198,170,122,0.55);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42px;
   pointer-events: none;
+  background:
+    /* 왼쪽 지우개 */
+    linear-gradient(180deg, transparent 0, transparent 8px, #efbfd0 8px, #e7afc3 32px, transparent 32px),
+    /* 오른쪽 분필 */
+    linear-gradient(180deg, transparent 0, transparent 20px, #ffffff 20px, #f0f0f0 30px, transparent 30px),
+    /* 분필 받침대 */
+    linear-gradient(180deg, transparent 0, transparent 18px, rgba(126,79,38,0.95) 18px, rgba(189,135,81,0.98) 100%);
+  background-size:
+    120px 100%,
+    90px 100%,
+    100% 100%;
+  background-position:
+    28px 0,
+    calc(100% - 34px) 0,
+    0 0;
+  background-repeat: no-repeat;
 }
 
 header h1 {
   margin: 0;
   position: relative;
   z-index: 1;
-  font-family: "Gaegu", "Jua", sans-serif;
-  font-size: 50px;
+  font-family: "Jua", "Gowun Dodum", sans-serif;
+  font-size: 46px;
   line-height: 1;
-  letter-spacing: -1px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.96);
+  letter-spacing: -0.8px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.97);
   text-shadow:
-    0 0 1px rgba(255,255,255,0.65),
-    1px 1px 0 rgba(255,255,255,0.14),
-    -1px 1px 0 rgba(255,255,255,0.10),
-    0 2px 6px rgba(0,0,0,0.10);
+    0 1px 0 rgba(255,255,255,0.10),
+    0 0 1px rgba(255,255,255,0.35),
+    0 2px 5px rgba(0,0,0,0.10);
 }
 
+/* 제목 아래 짧은 chalk line */
 header h1::after {
   content: "";
   display: block;
-  width: 108px;
-  height: 5px;
-  margin-top: 6px;
-  margin-left: 4px;
+  width: 98px;
+  height: 4px;
+  margin-top: 7px;
+  margin-left: 2px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.82);
-  opacity: 0.78;
-  transform: rotate(-2deg);
+  background: rgba(255,255,255,0.75);
+  opacity: 0.7;
 }
 
 header p {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   position: relative;
   z-index: 1;
+  max-width: 72%;
   font-size: 14px;
   line-height: 1.55;
-  color: rgba(255,255,255,0.92);
+  color: rgba(255,255,255,0.93);
   text-shadow: 0 1px 3px rgba(0,0,0,0.10);
-  max-width: 70%;
 }
 
 main {
@@ -250,8 +219,8 @@ main {
   font-family: "Gowun Dodum", sans-serif;
   font-size: 12px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.17);
-  border: 1px solid rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.24);
 }
 
 .card {
@@ -607,23 +576,28 @@ textarea {
   }
 
   header {
-    padding-top: 18px;
-    padding-bottom: 20px;
+    padding: 20px 14px 24px;
+    border-width: 14px;
   }
 
   header h1 {
-    font-size: 40px;
+    font-size: 38px;
   }
 
   header p {
-    max-width: 78%;
+    max-width: 85%;
     font-size: 13px;
   }
 
   header::after {
-    width: 88px;
-    font-size: 10px;
-    right: 12px;
-    top: 12px;
+    height: 38px;
+    background-size:
+      92px 100%,
+      70px 100%,
+      100% 100%;
+    background-position:
+      18px 0,
+      calc(100% - 24px) 0,
+      0 0;
   }
 }
