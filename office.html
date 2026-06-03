@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>똑똑 교무실용 - 3학년 교무실 호출</title>
+  <title>똑똑 교무실용 - 교무실 호출</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">교무실용 v1.0</span></h1>
-  <p>3학년 교무실(동국관 4층) 실시간 호출 확인 화면</p>
+  <h1>똑똑 <span class="version">교무실용 v1.1</span></h1>
+  <p>교무실 문 앞의 작은 노크를 실시간으로 확인합니다.</p>
 </header>
 
 <main>
@@ -18,27 +18,36 @@
     <h2>Firebase 설정 필요</h2>
     <p class="notice">
       아직 실시간 연결 설정이 되지 않았습니다.
-      <b>firebase-config.js</b> 파일의 YOUR_... 부분을 Firebase 설정값으로 바꾸면 작동합니다.
+      <b>firebase-config.js</b> 파일을 확인해 주세요.
     </p>
   </section>
 
-  <section class="card">
-    <h2>실시간 호출 목록</h2>
+  <section class="card hero-card">
+    <h2>교무실 화면 설정</h2>
 
-    <div class="row">
+    <label>현재 확인할 교무실</label>
+    <select id="officeFilter"></select>
+
+    <div class="row" style="margin-top:12px;">
       <button class="btn light" id="voiceTestBtn">알림 테스트</button>
       <button class="btn secondary" id="soundToggle">음성 알림 ON</button>
     </div>
 
     <p class="notice">
-      새 호출이 들어오면 “똑똑!”으로 시작하는 안내가 표시됩니다.
+      음성 알림을 꺼도 새 호출 카드는 깜빡이며 표시됩니다.
     </p>
+  </section>
 
+  <section class="card">
+    <h2>실시간 호출 목록</h2>
     <div id="officeCalls" class="notice">호출을 기다리는 중...</div>
   </section>
 
   <section class="card">
     <h2>선생님 → 학생 호출</h2>
+
+    <label>교무실 선택</label>
+    <select id="classCallOffice"></select>
 
     <div class="row">
       <div>
@@ -57,10 +66,10 @@
 
     <label>전달 내용</label>
     <select id="classCallMessage">
-      <option value="3학년 교무실로 와 주세요.">3학년 교무실로 와 주세요.</option>
-      <option value="쉬는 시간에 3학년 교무실로 와 주세요.">쉬는 시간에 3학년 교무실로 와 주세요.</option>
-      <option value="수업 후 3학년 교무실로 와 주세요.">수업 후 3학년 교무실로 와 주세요.</option>
-      <option value="제출물을 가지고 3학년 교무실로 와 주세요.">제출물을 가지고 3학년 교무실로 와 주세요.</option>
+      <option value="교무실로 와 주세요.">교무실로 와 주세요.</option>
+      <option value="점심시간에 교무실로 와 주세요.">점심시간에 교무실로 와 주세요.</option>
+      <option value="수업 후 교무실로 와 주세요.">수업 후 교무실로 와 주세요.</option>
+      <option value="제출물을 가지고 교무실로 와 주세요.">제출물을 가지고 교무실로 와 주세요.</option>
     </select>
 
     <button class="btn" style="margin-top:12px;" id="sendClassBtn">학생에게 호출 보내기</button>
@@ -68,7 +77,7 @@
   </section>
 
   <section class="card">
-    <h2>오늘 통계</h2>
+    <h2>선택한 교무실 통계</h2>
 
     <div class="stats">
       <div class="stat">
@@ -86,15 +95,16 @@
         <span>처리 완료</span>
       </div>
     </div>
+
+    <div class="link-row" style="margin-top:12px;">
+      <button class="btn light" id="exportBtn">호출 기록 CSV 다운로드</button>
+      <button class="btn bad" id="resetCallsBtn">호출 기록 리셋</button>
+    </div>
   </section>
 
   <section class="card">
     <h2>오늘 호출 기록</h2>
     <div id="adminCalls" class="notice">기록을 불러오는 중...</div>
-
-    <button class="btn light" style="margin-top:12px;" id="exportBtn">
-      호출 기록 CSV 다운로드
-    </button>
   </section>
 
   <p class="footer-note">
@@ -111,13 +121,31 @@
 let allCalls = [];
 let soundOn = true;
 let lastSpokenIds = new Set();
+let newCallIds = new Set();
 
 function initOfficeUI() {
-  fillTeacherSelect("officeTeacherSelect");
+  fillOfficeSelect("officeFilter", "grade3");
+  fillOfficeSelect("classCallOffice", "grade3");
   fillClassSelect("classCallClass");
+  fillTeacherSelect("officeTeacherSelect", document.getElementById("classCallOffice").value);
+
+  const savedOffice = localStorage.getItem("ddokddok_office_filter");
+  if (savedOffice) {
+    document.getElementById("officeFilter").value = savedOffice;
+  }
+
+  document.getElementById("officeFilter").addEventListener("change", () => {
+    localStorage.setItem("ddokddok_office_filter", document.getElementById("officeFilter").value);
+    renderOfficeCalls();
+    renderStatsAndHistory();
+  });
+
+  document.getElementById("classCallOffice").addEventListener("change", () => {
+    fillTeacherSelect("officeTeacherSelect", document.getElementById("classCallOffice").value);
+  });
 
   document.getElementById("voiceTestBtn").addEventListener("click", () => {
-    speak("똑똑! 3학년 교무실 호출 알림 테스트입니다.");
+    speak("똑똑! 교무실 호출 알림 테스트입니다.");
   });
 
   document.getElementById("soundToggle").addEventListener("click", () => {
@@ -127,6 +155,7 @@ function initOfficeUI() {
 
   document.getElementById("sendClassBtn").addEventListener("click", sendClassMessage);
   document.getElementById("exportBtn").addEventListener("click", exportCallsCSV);
+  document.getElementById("resetCallsBtn").addEventListener("click", resetCallsForOffice);
 }
 
 function speak(text) {
@@ -159,7 +188,10 @@ async function sendClassMessage() {
     return;
   }
 
+  const officeId = document.getElementById("classCallOffice").value;
+  const office = getOffice(officeId);
   const teacherName = document.getElementById("officeTeacherSelect").value;
+  const teacher = getTeacherByName(teacherName, officeId);
   const classNo = document.getElementById("classCallClass").value;
   const studentName = document.getElementById("classCallStudent").value.trim();
   const message = document.getElementById("classCallMessage").value;
@@ -169,11 +201,22 @@ async function sendClassMessage() {
     return;
   }
 
+  if (!teacher) {
+    alert("선생님을 선택해 주세요.");
+    return;
+  }
+
+  const finalMessage = message.replaceAll("교무실", office.name);
+
   await db.ref("classMessages").push({
+    officeId,
+    officeName: office.name,
+    officeLocation: office.location,
     classNo,
     studentName,
     teacherName,
-    message,
+    teacherTitle: teacher.title,
+    message: finalMessage,
     status: "active",
     createdAt: firebase.database.ServerValue.TIMESTAMP,
     version: APP_VERSION
@@ -186,7 +229,7 @@ async function sendClassMessage() {
 function startListeners() {
   if (!db) return;
 
-  db.ref("calls").orderByChild("createdAt").limitToLast(100).on("value", snap => {
+  db.ref("calls").orderByChild("createdAt").limitToLast(300).on("value", snap => {
     const arr = [];
 
     snap.forEach(child => {
@@ -199,53 +242,79 @@ function startListeners() {
     renderStatsAndHistory();
   });
 
-  db.ref("calls").orderByChild("createdAt").limitToLast(30).on("child_added", snap => {
+  db.ref("calls").orderByChild("createdAt").limitToLast(60).on("child_added", snap => {
     const call = { id: snap.key, ...snap.val() };
     const isNew = Date.now() - (call.createdAt || 0) < 15000;
 
     if (isNew && call.status === "pending" && !lastSpokenIds.has(call.id)) {
       lastSpokenIds.add(call.id);
-      speak(makeAnnouncement(call));
+      newCallIds.add(call.id);
+
+      if (!call.quiet && soundOn) {
+        speak(makeAnnouncement(call));
+      }
+
+      renderOfficeCalls();
+
+      setTimeout(() => {
+        newCallIds.delete(call.id);
+        renderOfficeCalls();
+      }, 25000);
     }
   });
 }
 
 function renderOfficeCalls() {
   const box = document.getElementById("officeCalls");
-  const activeCalls = allCalls.filter(c => c.status !== "completed");
+  const officeId = document.getElementById("officeFilter").value;
+  const activeCalls = allCalls.filter(c => c.officeId === officeId && c.status !== "completed");
 
   if (!activeCalls.length) {
     box.textContent = "현재 대기 중인 호출이 없습니다.";
     return;
   }
 
-  box.innerHTML = activeCalls.map(c => `
-    <div class="call-card ${c.urgency === "긴급" ? "urgent" : ""}">
-      <div class="call-title">
-        ${c.urgency === "긴급" ? `<span class="pill urgent">긴급</span> ` : ""}
-        똑똑! ${safe(c.teacherName)} 선생님 호출
-      </div>
+  box.innerHTML = activeCalls.map(c => {
+    const uClass = urgencyClass(c.urgency);
+    const quietClass = c.quiet ? "quiet" : "";
+    const isNew = newCallIds.has(c.id);
 
-      <div class="call-meta">
-        3학년 ${safe(c.classNo)}반 ${safe(c.studentName)} 학생 · ${safe(c.reason)} 요청 · ${fullTimeText(c.createdAt)}<br>
-        상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
-        ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
-      </div>
+    return `
+      <div class="call-card ${uClass} ${quietClass} ${isNew ? "new-call" : ""}">
+        <div class="call-title">
+          ${c.quiet ? `<span class="pill quiet">조용한 호출</span> ` : ""}
+          ${c.urgency === "빠른 확인 필요" ? `<span class="pill fast">빠른 확인 필요</span> ` : ""}
+          ${c.urgency === "긴급" ? `<span class="pill urgent">긴급</span> ` : ""}
+          똑똑! ${safe(c.teacherTitle || c.teacherName + " 선생님")} 호출
+        </div>
 
-      <div class="call-actions">
-        <button class="primary" onclick="updateCall('${c.id}', 'confirmed', '지금 3학년 교무실로 와 주세요.')">지금 오세요</button>
-        <button onclick="updateCall('${c.id}', 'confirmed', '쉬는 시간에 와 주세요.')">쉬는 시간에</button>
-        <button onclick="updateCall('${c.id}', 'confirmed', '수업 후에 와 주세요.')">수업 후에</button>
-        <button onclick="updateCall('${c.id}', 'confirmed', '잠시 기다려 주세요.')">잠시 기다려요</button>
-        <button class="done" onclick="updateCall('${c.id}', 'completed', '처리 완료')">처리 완료</button>
+        <div class="call-meta">
+          ${safe(c.officeName || "-")} · 3학년 ${safe(c.classNo)}반 ${safe(c.studentName)} 학생<br>
+          요청 내용: ${safe(c.reason)} · 시간: ${fullTimeText(c.createdAt)}<br>
+          상태: <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+          ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
+        </div>
+
+        <div class="call-actions">
+          <button class="primary" onclick="updateCall('${c.id}', 'confirmed', '지금 ${safe(c.officeName || "교무실")}로 와 주세요.')">지금 오세요</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '점심시간에 ${safe(c.officeName || "교무실")}로 와 주세요.')">점심시간에</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '수업 후에 ${safe(c.officeName || "교무실")}로 와 주세요.')">수업 후에</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '잠시 기다려 주세요.')">잠시 기다려요</button>
+          <button class="done" onclick="updateCall('${c.id}', 'completed', '처리 완료')">처리 완료</button>
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function renderStatsAndHistory() {
   const today = todayStartMs();
-  const todayCalls = allCalls.filter(c => (c.createdAt || 0) >= today);
+  const officeId = document.getElementById("officeFilter").value;
+
+  const todayCalls = allCalls.filter(c => {
+    return c.officeId === officeId && (c.createdAt || 0) >= today;
+  });
+
   const pending = todayCalls.filter(c => c.status !== "completed").length;
   const completed = todayCalls.filter(c => c.status === "completed").length;
 
@@ -260,30 +329,71 @@ function renderStatsAndHistory() {
     return;
   }
 
-  box.innerHTML = todayCalls.map(c => `
-    <div class="call-card">
-      <div class="call-title">${safe(c.teacherName)} 선생님 · ${safe(c.studentName)} 학생</div>
-      <div class="call-meta">
-        3학년 ${safe(c.classNo)}반 · ${safe(c.reason)} 요청 · 긴급도: ${safe(c.urgency)}<br>
-        시간: ${fullTimeText(c.createdAt)} · 상태:
-        <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+  box.innerHTML = todayCalls.map(c => {
+    const uClass = urgencyClass(c.urgency);
+
+    return `
+      <div class="call-card ${uClass}">
+        <div class="call-title">
+          ${safe(c.teacherTitle || c.teacherName + " 선생님")} · ${safe(c.studentName)} 학생
+        </div>
+        <div class="call-meta">
+          3학년 ${safe(c.classNo)}반 · ${safe(c.reason)} 요청 · 긴급도: ${safe(c.urgency)}<br>
+          시간: ${fullTimeText(c.createdAt)} · 상태:
+          <span class="pill ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+          ${c.response ? `<br>응답: <b>${safe(c.response)}</b>` : ""}
+        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
+}
+
+async function resetCallsForOffice() {
+  if (!db) {
+    alert("Firebase 설정이 필요합니다.");
+    return;
+  }
+
+  const officeId = document.getElementById("officeFilter").value;
+  const office = getOffice(officeId);
+
+  const ok = confirm(`${office.name}의 호출 기록을 리셋할까요?\n이 작업은 되돌릴 수 없습니다.`);
+  if (!ok) return;
+
+  const updates = {};
+  allCalls
+    .filter(c => c.officeId === officeId)
+    .forEach(c => {
+      updates[`calls/${c.id}`] = null;
+    });
+
+  if (!Object.keys(updates).length) {
+    alert("리셋할 호출 기록이 없습니다.");
+    return;
+  }
+
+  await db.ref().update(updates);
+  alert("호출 기록을 리셋했습니다.");
 }
 
 function exportCallsCSV() {
-  const header = ["시간", "학년", "반", "학생", "선생님", "과목", "요청 내용", "긴급도", "상태", "응답"];
+  const officeId = document.getElementById("officeFilter").value;
+  const office = getOffice(officeId);
+  const filtered = allCalls.filter(c => c.officeId === officeId);
 
-  const rows = allCalls.map(c => [
+  const header = ["시간", "교무실", "학년", "반", "학생", "선생님", "과목", "요청 내용", "긴급도", "조용한 호출", "상태", "응답"];
+
+  const rows = filtered.map(c => [
     fullTimeText(c.createdAt),
+    c.officeName,
     "3",
     c.classNo,
     c.studentName,
-    c.teacherName,
+    c.teacherTitle || c.teacherName,
     c.teacherSubject,
     c.reason,
     c.urgency,
+    c.quiet ? "예" : "아니오",
     statusLabel(c.status),
     c.response || ""
   ]);
@@ -297,7 +407,7 @@ function exportCallsCSV() {
   const a = document.createElement("a");
 
   a.href = url;
-  a.download = `ddokddok_calls_${Date.now()}.csv`;
+  a.download = `ddokddok_${office.name}_calls_${Date.now()}.csv`;
   a.click();
 
   URL.revokeObjectURL(url);
