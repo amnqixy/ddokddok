@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>똑똑 학생용 - 교무실 호출</title>
-  <link rel="stylesheet" href="style.css?v=1.5" />
+  <link rel="stylesheet" href="style.css?v=1.6" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">학생용 v1.5</span></h1>
+  <h1>똑똑 <span class="version">학생용 v1.6</span></h1>
   <p>교무실 문 앞에서 머뭇거리지 않도록, 조용히 똑똑.</p>
 </header>
 
@@ -116,8 +116,8 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="firebase-config.js?v=1.5"></script>
-<script src="common.js?v=1.5"></script>
+<script src="firebase-config.js?v=1.6"></script>
+<script src="common.js?v=1.6"></script>
 
 <script>
 let allCalls = [];
@@ -284,7 +284,7 @@ async function sendStudentCall() {
     fingerprint,
     createdAt: firebase.database.ServerValue.TIMESTAMP,
     updatedAt: firebase.database.ServerValue.TIMESTAMP,
-    version: "v1.5"
+    version: "v1.6"
   };
 
   await db.ref("calls").push(call);
