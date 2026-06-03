@@ -4,12 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>똑똑 교무실용 - 교무실 호출</title>
-  <link rel="stylesheet" href="style.css?v=1.2" />
+  <link rel="stylesheet" href="style.css?v=1.3" />
 </head>
 
 <body>
 <header>
-  <h1>똑똑 <span class="version">교무실용 v1.2</span></h1>
+  <h1>똑똑 <span class="version">교무실용 v1.3</span></h1>
   <p>교무실 문 앞의 작은 노크를 실시간으로 확인합니다.</p>
 </header>
 
@@ -70,7 +70,7 @@
     <label>전달 내용</label>
     <select id="classCallMessage">
       <option value="교무실로 와 주세요.">교무실로 와 주세요.</option>
-      <option value="점심시간에 교무실로 와 주세요.">점심시간에 교무실로 와 주세요.</option>
+      <option value="점심 시간에 교무실로 와 주세요.">점심 시간에 교무실로 와 주세요.</option>
       <option value="수업 후 교무실로 와 주세요.">수업 후 교무실로 와 주세요.</option>
       <option value="제출물을 가지고 교무실로 와 주세요.">제출물을 가지고 교무실로 와 주세요.</option>
     </select>
@@ -117,14 +117,55 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="firebase-config.js?v=1.2"></script>
-<script src="common.js?v=1.2"></script>
+<script src="firebase-config.js?v=1.3"></script>
+<script src="common.js?v=1.3"></script>
 
 <script>
 let allCalls = [];
 let soundOn = true;
 let lastSpokenIds = new Set();
 let newCallIds = new Set();
+let preferredVoice = null;
+
+/* 브라우저에서 가능한 범위 안에서
+   밝고 따뜻한 일본 여성 음성을 우선 선택 */
+function choosePreferredVoice() {
+  if (!("speechSynthesis" in window)) return null;
+
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  const priorityNames = [
+    "Kyoko", "Haruka", "Sayaka", "O-ren", "O-Ren", "Ichiro"
+  ];
+
+  // 1순위: 일본어 음성 중 이름이 잘 알려진 기본 음성
+  let voice =
+    voices.find(v => priorityNames.some(n => v.name.includes(n))) ||
+    voices.find(v => v.lang === "ja-JP" && /female|kyoko|haruka|sayaka/i.test(v.name)) ||
+    voices.find(v => v.lang === "ja-JP");
+
+  // 2순위: 한국어 음성 중 비교적 부드러운 음성
+  if (!voice) {
+    voice =
+      voices.find(v => v.lang.startsWith("ko") && /female|yuna|narae/i.test(v.name)) ||
+      voices.find(v => v.lang.startsWith("ko"));
+  }
+
+  // 3순위: 아무거나
+  if (!voice) voice = voices[0];
+
+  return voice;
+}
+
+function refreshVoice() {
+  preferredVoice = choosePreferredVoice();
+}
+
+if ("speechSynthesis" in window) {
+  refreshVoice();
+  window.speechSynthesis.onvoiceschanged = refreshVoice;
+}
 
 function initOfficeUI() {
   fillOfficeSelect("officeFilter", "grade3");
@@ -170,15 +211,30 @@ function speak(text) {
   window.speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = "ko-KR";
-  utter.rate = 1.05;
-  utter.pitch = 1.1;
+
+  refreshVoice();
+
+  if (preferredVoice) {
+    utter.voice = preferredVoice;
+    utter.lang = preferredVoice.lang || "ko-KR";
+  } else {
+    utter.lang = "ko-KR";
+  }
+
+  /* 밝고 따뜻한 느낌 */
+  utter.rate = 1.03;
+  utter.pitch = 1.22;
+  utter.volume = 1;
 
   window.speechSynthesis.speak(utter);
 }
 
 async function updateCall(callId, status, response) {
   if (!db) return;
+
+  /* 확인 버튼 누르면 깜빡임 즉시 해제 */
+  newCallIds.delete(callId);
+  renderOfficeCalls();
 
   await db.ref("calls/" + callId).update({
     status,
@@ -287,7 +343,7 @@ function renderOfficeCalls() {
   box.innerHTML = activeCalls.map(c => {
     const uClass = urgencyClass(c.urgency);
     const quietClass = c.quiet ? "quiet" : "";
-    const isNew = newCallIds.has(c.id);
+    const isNew = c.status === "pending" && newCallIds.has(c.id);
     const officeName = c.officeName || "교무실";
     const grade = c.grade || "3";
 
@@ -309,7 +365,7 @@ function renderOfficeCalls() {
 
         <div class="call-actions">
           <button class="primary" onclick="updateCall('${c.id}', 'confirmed', '지금 ${safe(officeName)}로 와 주세요.')">지금 오세요</button>
-          <button onclick="updateCall('${c.id}', 'confirmed', '점심시간에 ${safe(officeName)}로 와 주세요.')">점심시간에</button>
+          <button onclick="updateCall('${c.id}', 'confirmed', '점심 시간에 ${safe(officeName)}로 와 주세요.')">점심 시간에</button>
           <button onclick="updateCall('${c.id}', 'confirmed', '수업 후에 ${safe(officeName)}로 와 주세요.')">수업 후에</button>
           <button onclick="updateCall('${c.id}', 'confirmed', '잠시 기다려 주세요.')">잠시 기다려요</button>
           <button class="done" onclick="updateCall('${c.id}', 'completed', '처리 완료')">처리 완료</button>
